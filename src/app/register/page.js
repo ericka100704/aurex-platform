@@ -2,8 +2,9 @@ import { redirect } from "next/navigation";
 import RegisterForm from "@/components/auth/RegisterForm";
 import { getCurrentUser } from "@/lib/auth";
 
-export default async function RegisterPage({ searchParams }) {
-  const user = await getCurrentUser();
+export const dynamic = "force-dynamic";
+
+export default async function RegisterPage({ searchParams }) {  const user = await getCurrentUser();
   if (user) {
     redirect("/dashboard");
   }
