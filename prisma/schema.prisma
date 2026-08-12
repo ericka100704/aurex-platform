@@ -1,0 +1,210 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  BANNED
+}
+
+enum PlanStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum InvestmentStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum TransactionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum DepositMethodType {
+  GCASH
+  GOTYME
+  MAYA
+  BANK_TRANSFER
+  CRYPTO
+  CUSTOM
+}
+
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  passwordHash  String
+  fullName      String
+  phone         String?
+  role          Role       @default(USER)
+  status        UserStatus @default(ACTIVE)
+  balance       Decimal    @default(0) @db.Decimal(18, 2)
+  referralCode  String     @unique
+  referredById  String?
+  referredBy    User?      @relation("UserReferrals", fields: [referredById], references: [id])
+  referrals     User[]     @relation("UserReferrals")
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  investments   Investment[]
+  deposits      Deposit[]
+  withdrawals   Withdrawal[]
+  referralsMade Referral[]   @relation("Referrer")
+  referralsGot  Referral[]   @relation("Referred")
+
+  @@index([email])
+  @@index([referralCode])
+  @@index([referredById])
+  @@map("users")
+}
+
+model Plan {
+  id              String     @id @default(cuid())
+  name            String
+  description     String?
+  minAmount       Decimal    @db.Decimal(18, 2)
+  maxAmount       Decimal?   @db.Decimal(18, 2)
+  dailyReturnPct  Decimal    @db.Decimal(8, 4)
+  durationDays    Int
+  totalReturnPct  Decimal    @db.Decimal(8, 4)
+  status          PlanStatus @default(ACTIVE)
+  sortOrder       Int        @default(0)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  investments     Investment[]
+
+  @@map("plans")
+}
+
+model Investment {
+  id              String           @id @default(cuid())
+  userId          String
+  planId          String
+  amount          Decimal          @db.Decimal(18, 2)
+  dailyReturn     Decimal          @db.Decimal(18, 2)
+  totalExpected   Decimal          @db.Decimal(18, 2)
+  earnedAmount    Decimal          @default(0) @db.Decimal(18, 2)
+  status          InvestmentStatus @default(ACTIVE)
+  startDate       DateTime         @default(now())
+  endDate         DateTime
+  lastRoiAt       DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id])
+  plan            Plan             @relation(fields: [planId], references: [id])
+
+  @@index([userId])
+  @@index([planId])
+  @@index([status])
+  @@map("investments")
+}
+
+model DepositMethod {
+  id            String            @id @default(cuid())
+  name          String
+  type          DepositMethodType
+  accountName   String?
+  accountNumber String?
+  qrImageUrl    String?
+  walletAddress String?
+  instructions  String?
+  isActive      Boolean           @default(true)
+  sortOrder     Int               @default(0)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  deposits      Deposit[]
+
+  @@map("deposit_methods")
+}
+
+model Deposit {
+  id              String            @id @default(cuid())
+  userId          String
+  methodId        String?
+  amount          Decimal           @db.Decimal(18, 2)
+  proofImageUrl   String?
+  referenceNote   String?
+  status          TransactionStatus @default(PENDING)
+  adminNote       String?
+  reviewedById    String?
+  reviewedAt      DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  user            User              @relation(fields: [userId], references: [id])
+  method          DepositMethod?    @relation(fields: [methodId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@map("deposits")
+}
+
+model Withdrawal {
+  id              String            @id @default(cuid())
+  userId          String
+  amount          Decimal           @db.Decimal(18, 2)
+  methodType      String
+  accountDetails  String
+  status          TransactionStatus @default(PENDING)
+  adminNote       String?
+  reviewedById    String?
+  reviewedAt      DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  user            User              @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@map("withdrawals")
+}
+
+model Referral {
+  id               String   @id @default(cuid())
+  referrerId       String
+  referredId       String
+  level            Int      @default(1)
+  commissionRate   Decimal  @db.Decimal(8, 4)
+  commissionEarned Decimal  @default(0) @db.Decimal(18, 2)
+  createdAt        DateTime @default(now())
+
+  referrer         User     @relation("Referrer", fields: [referrerId], references: [id])
+  referred         User     @relation("Referred", fields: [referredId], references: [id])
+
+  @@unique([referrerId, referredId, level])
+  @@index([referrerId])
+  @@index([referredId])
+  @@map("referrals")
+}
+
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  label     String?
+  group     String   @default("general")
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@map("system_settings")
+}
