@@ -9,7 +9,6 @@ export default function Topbar({
   title,
   subtitle,
   userName = "Investor",
-  userEmail = "",
   avatarUrl = "",
   variant = "user",
   onMenuClick,
@@ -51,7 +50,7 @@ export default function Topbar({
           <NotificationBell />
           <Link
             href={variant === "user" ? "/dashboard/profile" : "/admin/profile"}
-            className="hidden rounded-full border border-white/10 bg-white/[0.04] p-2.5 text-white/65 transition hover:border-magenta/40 hover:text-white sm:inline-flex"
+            className="rounded-full border border-white/10 bg-white/[0.04] p-2.5 text-white/65 transition hover:border-magenta/40 hover:text-white"
             aria-label="Settings"
           >
             <Settings className="h-4 w-4" />
@@ -59,25 +58,20 @@ export default function Topbar({
 
           <Link
             href={variant === "user" ? "/dashboard/profile" : "/admin/profile"}
-            className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] py-1 pl-1 pr-2 md:gap-2.5 md:py-1.5 md:pl-1.5 md:pr-3"
+            className="shrink-0 overflow-hidden rounded-full border border-white/10"
+            aria-label="Profile"
           >
             {avatarUrl ? (
               <img
                 src={avatarUrl}
                 alt=""
-                className="h-8 w-8 rounded-full object-cover md:h-9 md:w-9"
+                className="h-9 w-9 object-cover md:h-10 md:w-10"
               />
             ) : (
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-pink-glow text-[11px] font-bold text-white shadow-glow md:h-9 md:w-9 md:text-xs">
+              <span className="flex h-9 w-9 items-center justify-center bg-pink-glow text-[11px] font-bold text-white shadow-glow md:h-10 md:w-10 md:text-xs">
                 {initials}
               </span>
             )}
-            <div className="hidden min-w-0 sm:block">
-              <p className="truncate text-sm font-medium text-white">{userName}</p>
-              {userEmail ? (
-                <p className="truncate text-[11px] text-white/40">{userEmail}</p>
-              ) : null}
-            </div>
           </Link>
           <LogoutButton />
         </div>

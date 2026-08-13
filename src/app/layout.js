@@ -22,6 +22,10 @@ const sans = Manrope({
 export const metadata = {
   title: "AUREX",
   description: "AUREX — trade, grow, succeed. Luxury online investment platform.",
+  icons: {
+    icon: [{ url: "/aurex-logo.png", type: "image/png" }],
+    apple: [{ url: "/aurex-logo.png", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({ children }) {
