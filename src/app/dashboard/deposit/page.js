@@ -18,8 +18,8 @@ export default async function DepositPage() {
           <li>1. Select GCash or GoTyme (admin-configured).</li>
           <li>2. Transfer the exact amount to the shown account.</li>
           <li>3. Upload your receipt / proof of payment.</li>
-          <li>4. Wait for admin approval — status stays Pending until then.</li>
-          <li>5. Balance + referral commissions update when approved.</li>
+          <li>4. Submit — your balance and referral commissions update immediately.</li>
+          <li>5. Admin approval is only required when you withdraw.</li>
         </ol>
         <div className="metallic-line relative z-10 my-5" />
         <ul className="relative z-10 space-y-2 text-sm">

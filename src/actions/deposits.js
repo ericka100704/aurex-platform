@@ -47,26 +47,43 @@ export async function submitDepositAction(formData) {
     return { ok: false, message: "Failed to upload receipt image." };
   }
 
-  const deposit = await prisma.deposit.create({
-    data: {
-      userId: user.id,
-      methodId: method.id,
-      amount,
-      referenceNote,
-      proofImageUrl,
-      status: "PENDING",
-    },
-  });
+  try {
+    const deposit = await prisma.$transaction(async (tx) => {
+      const created = await tx.deposit.create({
+        data: {
+          userId: user.id,
+          methodId: method.id,
+          amount,
+          referenceNote,
+          proofImageUrl,
+          status: "APPROVED",
+          reviewedAt: new Date(),
+        },
+      });
 
-  revalidatePath("/dashboard");
-  revalidatePath("/dashboard/deposit");
-  revalidatePath("/admin");
-  revalidatePath("/admin/deposits");
-  return {
-    ok: true,
-    data: serialize(deposit),
-    message: "Deposit submitted. Waiting for admin approval.",
-  };
+      await tx.user.update({
+        where: { id: user.id },
+        data: { balance: { increment: amount } },
+      });
+      await payReferralCommissions(user.id, amount, tx);
+      return created;
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/deposit");
+    revalidatePath("/dashboard/wallet");
+    revalidatePath("/dashboard/referrals");
+    revalidatePath("/admin");
+    revalidatePath("/admin/deposits");
+    revalidatePath("/admin/users");
+    return {
+      ok: true,
+      data: serialize(deposit),
+      message: "Deposit credited. Your balance is updated.",
+    };
+  } catch {
+    return { ok: false, message: "Failed to credit deposit." };
+  }
 }
 
 export async function reviewDepositAction({ id, action, adminNote }) {

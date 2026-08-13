@@ -38,7 +38,7 @@ export default function DepositForm({ methods = [] }) {
   return (
     <GlassCard hover={false}>
       <h3 className="font-display text-lg text-white">Deposit Funds</h3>
-      <p className="text-xs text-white/45">Upload proof — pending admin approval</p>
+      <p className="text-xs text-white/45">Upload proof — credited to your wallet right away</p>
 
       <form onSubmit={handleSubmit} className="mt-4 space-y-3">
         <div>

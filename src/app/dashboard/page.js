@@ -78,7 +78,7 @@ export default async function UserDashboardPage() {
               <h3 className="font-display text-xl text-white">Grow with AUREX</h3>
               <p className="mt-2 text-sm leading-relaxed text-white/45">
                 Deposit via GCash or GoTyme, pick a live plan, and earn referral
-                rewards on approved deposits.
+                rewards on every deposit.
               </p>
               <div className="mt-5 flex flex-col gap-2.5">
                 <Link href="/dashboard/deposit" className="btn-rose w-full">

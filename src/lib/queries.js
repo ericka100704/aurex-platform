@@ -73,15 +73,7 @@ export async function getRoiTimeline(userId) {
   return days.map((day) => ({ day, earned: daily }));
 }
 
-export async function getPendingDeposits() {
-  const rows = await prisma.deposit.findMany({
-    where: { status: "PENDING" },
-    include: {
-      user: { select: { fullName: true } },
-      method: { select: { name: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+function mapDepositRows(rows) {
   return serialize(
     rows.map((d) => ({
       id: d.id,
@@ -93,6 +85,30 @@ export async function getPendingDeposits() {
       proofImageUrl: d.proofImageUrl,
     }))
   );
+}
+
+export async function getPendingDeposits() {
+  const rows = await prisma.deposit.findMany({
+    where: { status: "PENDING" },
+    include: {
+      user: { select: { fullName: true } },
+      method: { select: { name: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+  return mapDepositRows(rows);
+}
+
+export async function getRecentDeposits(limit = 40) {
+  const rows = await prisma.deposit.findMany({
+    include: {
+      user: { select: { fullName: true } },
+      method: { select: { name: true } },
+    },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  });
+  return mapDepositRows(rows);
 }
 
 export async function getPendingWithdrawals() {
@@ -134,14 +150,19 @@ export async function getAdminDashboardMetrics() {
   const [
     totalUsers,
     activeInvestments,
-    pendingDeposits,
+    depositsToday,
     pendingWithdrawals,
     investments,
     deposits,
   ] = await Promise.all([
     prisma.user.count({ where: { role: "USER" } }),
     prisma.investment.count({ where: { status: "ACTIVE" } }),
-    prisma.deposit.count({ where: { status: "PENDING" } }),
+    prisma.deposit.count({
+      where: {
+        status: "APPROVED",
+        createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+      },
+    }),
     prisma.withdrawal.count({ where: { status: "PENDING" } }),
     prisma.investment.aggregate({ _sum: { amount: true } }),
     prisma.deposit.aggregate({
@@ -153,7 +174,7 @@ export async function getAdminDashboardMetrics() {
   return {
     totalUsers,
     activeInvestments,
-    pendingDeposits,
+    depositsToday,
     pendingWithdrawals,
     totalVolume:
       toNumber(investments._sum.amount) + toNumber(deposits._sum.amount),

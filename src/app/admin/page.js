@@ -4,7 +4,6 @@ import PlansEditor from "@/components/admin/PlansEditor";
 import {
   getAdminDashboardMetrics,
   getAllPlans,
-  getPendingDeposits,
   getPendingWithdrawals,
 } from "@/lib/queries";
 import { formatCurrency } from "@/lib/utils";
@@ -12,9 +11,8 @@ import { formatCurrency } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
-  const [m, pendingDeposits, pendingWithdrawals, plans] = await Promise.all([
+  const [m, pendingWithdrawals, plans] = await Promise.all([
     getAdminDashboardMetrics(),
-    getPendingDeposits(),
     getPendingWithdrawals(),
     getAllPlans(),
   ]);
@@ -36,8 +34,8 @@ export default async function AdminDashboardPage() {
           delay={0.05}
         />
         <StatCard
-          label="Pending Deposits"
-          value={String(m.pendingDeposits)}
+          label="Deposits Today"
+          value={String(m.depositsToday)}
           icon="arrowDown"
           accent="gold"
           delay={0.1}
@@ -66,18 +64,12 @@ export default async function AdminDashboardPage() {
         />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <ApprovalQueue
-          title="Deposit Approval Queue"
-          items={pendingDeposits}
-          type="deposit"
-        />
-        <ApprovalQueue
-          title="Withdrawal Approval Queue"
-          items={pendingWithdrawals}
-          type="withdrawal"
-        />
-      </div>
+      <ApprovalQueue
+        title="Withdrawal Approval Queue"
+        subtitle="Approve or reject withdrawal requests"
+        items={pendingWithdrawals}
+        type="withdrawal"
+      />
 
       <PlansEditor initialPlans={plans} />
     </div>

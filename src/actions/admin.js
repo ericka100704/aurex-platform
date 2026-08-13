@@ -94,14 +94,19 @@ export async function getAdminMetrics() {
   const [
     totalUsers,
     activeInvestments,
-    pendingDeposits,
+    depositsToday,
     pendingWithdrawals,
     investments,
     deposits,
   ] = await Promise.all([
     prisma.user.count({ where: { role: "USER" } }),
     prisma.investment.count({ where: { status: "ACTIVE" } }),
-    prisma.deposit.count({ where: { status: "PENDING" } }),
+    prisma.deposit.count({
+      where: {
+        status: "APPROVED",
+        createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+      },
+    }),
     prisma.withdrawal.count({ where: { status: "PENDING" } }),
     prisma.investment.aggregate({ _sum: { amount: true } }),
     prisma.deposit.aggregate({
@@ -113,7 +118,7 @@ export async function getAdminMetrics() {
   return serialize({
     totalUsers,
     activeInvestments,
-    pendingDeposits,
+    depositsToday,
     pendingWithdrawals,
     totalVolume:
       Number(investments._sum.amount || 0) + Number(deposits._sum.amount || 0),

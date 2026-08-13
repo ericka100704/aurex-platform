@@ -9,6 +9,7 @@ import { reviewWithdrawalAction } from "@/actions/withdrawals";
 
 export default function ApprovalQueue({
   title,
+  subtitle,
   items: initialItems = [],
   type = "deposit",
 }) {
@@ -36,7 +37,9 @@ export default function ApprovalQueue({
     <GlassCard hover={false} className="overflow-hidden p-0">
       <div className="border-b border-white/5 px-5 py-4">
         <h3 className="font-display text-lg text-white">{title}</h3>
-        <p className="text-xs text-white/45">Approve or reject {type} requests</p>
+        <p className="text-xs text-white/45">
+          {subtitle || `Approve or reject ${type} requests`}
+        </p>
       </div>
       <ul className="divide-y divide-white/5">
         {items.length === 0 ? (

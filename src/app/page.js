@@ -59,7 +59,7 @@ const STEPS = [
   {
     step: "02",
     title: "Deposit via GCash or GoTyme",
-    text: "Send payment, upload your receipt, then wait for admin approval. Balance updates when approved.",
+    text: "Send payment, upload your receipt, and your balance is credited right away.",
   },
   {
     step: "03",
@@ -87,7 +87,7 @@ const FEATURES = [
   {
     icon: ShieldCheck,
     title: "Admin-controlled security",
-    text: "Deposits and withdrawals go through approval queues.",
+    text: "Withdrawals go through an admin approval queue. Deposits credit instantly.",
   },
   {
     icon: Clock3,
@@ -341,7 +341,7 @@ export default function HomePage() {
               <TrendingUp className="mx-auto h-8 w-8 text-gold" />
               <p className="mt-3 font-display text-3xl text-white">4</p>
               <p className="mt-1 text-sm text-white/70">Reward levels deep</p>
-              <p className="mt-2 text-xs text-white/40">Paid from approved deposits</p>
+              <p className="mt-2 text-xs text-white/40">Paid from every deposit</p>
             </div>
           </div>
           <div className="mt-8 text-center">
