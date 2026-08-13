@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import GlassCard from "@/components/ui/GlassCard";
+import FileUpload from "@/components/ui/FileUpload";
 import { submitDepositAction } from "@/actions/deposits";
 
 export default function DepositForm({ methods = [] }) {
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
+  const [uploadKey, setUploadKey] = useState(0);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -15,7 +17,10 @@ export default function DepositForm({ methods = [] }) {
     const formData = new FormData(e.currentTarget);
     const result = await submitDepositAction(formData);
     setMessage(result.message);
-    if (result.ok) e.currentTarget.reset();
+    if (result.ok) {
+      e.currentTarget.reset();
+      setUploadKey((k) => k + 1);
+    }
     setPending(false);
   }
 
@@ -66,10 +71,7 @@ export default function DepositForm({ methods = [] }) {
             placeholder="Optional transfer reference"
           />
         </div>
-        <div>
-          <label className="mb-1 block text-xs text-white/50">Receipt / Proof</label>
-          <input type="file" name="proof" accept="image/*" className="input-luxury" />
-        </div>
+        <FileUpload key={uploadKey} name="proof" accept="image/*" label="Receipt / Proof" />
         <button type="submit" className="btn-rose w-full" disabled={pending}>
           {pending ? "Submitting..." : "Submit Deposit"}
         </button>
