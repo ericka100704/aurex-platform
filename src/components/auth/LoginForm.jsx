@@ -34,13 +34,11 @@ export default function LoginForm() {
           name="email"
           placeholder="Email"
           required
-          defaultValue="demo@aurex.app"
         />
         <PasswordInput
           name="password"
           placeholder="Password"
           required
-          defaultValue="user123"
         />
         <button type="submit" className="btn-gold w-full" disabled={pending}>
           {pending ? "Signing in..." : "Sign in"}
@@ -54,9 +52,6 @@ export default function LoginForm() {
         <Link href="/register" className="text-rose hover:underline">
           Register
         </Link>
-      </p>
-      <p className="mt-3 text-center text-[11px] text-white/30">
-        Admin: admin@aurex.app / admin123
       </p>
     </div>
   );
