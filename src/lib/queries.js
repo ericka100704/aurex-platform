@@ -73,14 +73,6 @@ export const getUserReferrals = cache(async (userId) => {
   );
 });
 
-export function roiTimelineFromInvestments(investments = []) {
-  const daily = investments
-    .filter((i) => i.status === "ACTIVE")
-    .reduce((s, i) => s + toNumber(i.dailyReturn), 0);
-  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  return days.map((day) => ({ day, earned: daily }));
-}
-
 function mapDepositRows(rows) {
   return serialize(
     rows.map((d) => ({

@@ -10,7 +10,6 @@ import {
   getActivePlans,
   getUserInvestments,
   getUserReferrals,
-  roiTimelineFromInvestments,
 } from "@/lib/queries";
 import { formatCurrency } from "@/lib/utils";
 
@@ -23,7 +22,6 @@ export default async function UserDashboardPage() {
     getUserInvestments(user.id),
     getUserReferrals(user.id),
   ]);
-  const roiTimeline = roiTimelineFromInvestments(investments);
 
   const active = investments.filter((i) => i.status === "ACTIVE");
   const locked = active.reduce((s, i) => s + Number(i.amount || 0), 0);
@@ -93,7 +91,7 @@ export default async function UserDashboardPage() {
         </div>
 
         <div className="xl:col-span-8">
-          <RoiChart data={roiTimeline} />
+          <RoiChart investments={investments} />
         </div>
       </div>
 

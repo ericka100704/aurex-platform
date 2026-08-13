@@ -3,13 +3,16 @@
 import { useMemo, useState } from "react";
 import GlassCard from "@/components/ui/GlassCard";
 import { formatCurrency, cn } from "@/lib/utils";
+import { ROI_RANGES, buildRoiSeries } from "@/lib/roiTimeline";
 
-const RANGES = ["1D", "1W", "1M", "6M", "1Y"];
-
-export default function RoiChart({ data = [] }) {
+export default function RoiChart({ investments = [] }) {
   const [range, setRange] = useState("1W");
+  const series = useMemo(
+    () => buildRoiSeries(investments, range),
+    [investments, range]
+  );
+  const data = series.points;
   const max = Math.max(...data.map((d) => d.earned), 1);
-  const total = data.reduce((s, d) => s + Number(d.earned || 0), 0);
 
   const areaPath = useMemo(() => {
     if (!data.length) return "";
@@ -47,18 +50,18 @@ export default function RoiChart({ data = [] }) {
         <div>
           <h3 className="font-display text-lg text-white">ROI Timeline</h3>
           <p className="mt-1 text-xs text-white/40">
-            Daily ROI this week · {formatCurrency(total)}
+            {series.caption} · {formatCurrency(series.total)}
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5">
-          {RANGES.map((item) => (
+          {ROI_RANGES.map((item) => (
             <button
-              key={item}
+              key={item.id}
               type="button"
-              onClick={() => setRange(item)}
-              className={cn("pill !px-2.5 !py-1", range === item && "pill-active")}
+              onClick={() => setRange(item.id)}
+              className={cn("pill !px-2.5 !py-1", range === item.id && "pill-active")}
             >
-              {item}
+              {item.id}
             </button>
           ))}
         </div>
@@ -96,10 +99,10 @@ export default function RoiChart({ data = [] }) {
             <div className="pointer-events-none absolute inset-x-2 bottom-2 flex justify-between px-1">
               {data.map((item) => (
                 <span
-                  key={item.day}
-                  className="text-[10px] uppercase tracking-wider text-white/35"
+                  key={item.key}
+                  className="min-w-0 flex-1 text-center text-[10px] uppercase tracking-wider text-white/35"
                 >
-                  {item.day}
+                  {item.showLabel ? item.label : ""}
                 </span>
               ))}
             </div>
