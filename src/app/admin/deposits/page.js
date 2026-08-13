@@ -11,6 +11,7 @@ export default async function AdminDepositsPage() {
       subtitle="Deposits credit instantly. Review receipts here."
       items={items}
       type="deposit"
+      showStatus={false}
     />
   );
 }

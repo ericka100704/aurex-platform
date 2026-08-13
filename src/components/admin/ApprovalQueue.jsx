@@ -12,6 +12,7 @@ export default function ApprovalQueue({
   subtitle,
   items: initialItems = [],
   type = "deposit",
+  showStatus = true,
 }) {
   const [items, setItems] = useState(initialItems);
   const [busyId, setBusyId] = useState(null);
@@ -70,29 +71,31 @@ export default function ApprovalQueue({
                   ) : null}
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge status={item.status} />
-                {item.status === "PENDING" ? (
-                  <>
-                    <button
-                      type="button"
-                      disabled={busyId === item.id}
-                      onClick={() => review(item.id, "APPROVED")}
-                      className="btn-gold !px-3 !py-1.5 text-xs"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busyId === item.id}
-                      onClick={() => review(item.id, "REJECTED")}
-                      className="btn-ghost !px-3 !py-1.5 text-xs"
-                    >
-                      Reject
-                    </button>
-                  </>
-                ) : null}
-              </div>
+              {showStatus ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusBadge status={item.status} />
+                  {item.status === "PENDING" ? (
+                    <>
+                      <button
+                        type="button"
+                        disabled={busyId === item.id}
+                        onClick={() => review(item.id, "APPROVED")}
+                        className="btn-gold !px-3 !py-1.5 text-xs"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busyId === item.id}
+                        onClick={() => review(item.id, "REJECTED")}
+                        className="btn-ghost !px-3 !py-1.5 text-xs"
+                      >
+                        Reject
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+              ) : null}
             </li>
           ))
         )}
