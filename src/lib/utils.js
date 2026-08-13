@@ -20,8 +20,36 @@ export function formatDate(date) {
   }).format(new Date(date));
 }
 
+export function formatDateTime(date) {
+  if (!date) return "—";
+  return new Intl.DateTimeFormat("en-PH", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(date));
+}
+
 export function cn(...classes) {
   return classes.filter(Boolean).join(" ");
+}
+
+/** Normalize a PH mobile to 09XXXXXXXXX, or null if invalid. */
+export function normalizePhMobile(raw) {
+  const digits = String(raw || "").replace(/\D/g, "");
+  let local = digits;
+  if (digits.startsWith("63") && digits.length === 12) local = `0${digits.slice(2)}`;
+  else if (digits.startsWith("9") && digits.length === 10) local = `0${digits}`;
+  if (/^09\d{9}$/.test(local)) return local;
+  return null;
+}
+
+export function formatPayoutDestination({ accountName, accountNumber }) {
+  const name = String(accountName || "").trim();
+  const number = String(accountNumber || "").trim();
+  if (name && number) return `${name} · ${number}`;
+  return number || name;
 }
 
 export function calcDailyReturn(amount, dailyReturnPct) {

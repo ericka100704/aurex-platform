@@ -4,6 +4,8 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { serialize } from "@/lib/serialize";
+import { createNotification, formatCurrency } from "@/lib/notifications";
+import { runDailyRoiCredit } from "@/lib/roiCredit";
 
 export async function updateUserAction({ id, status }) {
   await requireAdmin();
@@ -18,6 +20,18 @@ export async function updateUserAction({ id, status }) {
   const user = await prisma.user.update({
     where: { id },
     data: { status },
+  });
+
+  const statusLabel = status.toLowerCase();
+  await createNotification({
+    userId: user.id,
+    type: "account",
+    title: "Account update",
+    body:
+      status === "ACTIVE"
+        ? "Your account is active again."
+        : `Your account was set to ${statusLabel}.`,
+    href: "/dashboard",
   });
 
   revalidatePath("/admin");
@@ -85,10 +99,38 @@ export async function updateSettingsAction(values) {
   }
 
   revalidateTag("settings");
+  revalidatePath("/");
   revalidatePath("/admin/settings");
   revalidatePath("/dashboard/withdraw");
   revalidatePath("/dashboard/referrals");
   return { ok: true, message: "Settings saved." };
+}
+
+export async function runRoiCreditAction() {
+  await requireAdmin();
+  try {
+    const summary = await runDailyRoiCredit();
+    const parts = [
+      `${summary.credited} ROI credit${summary.credited === 1 ? "" : "s"}`,
+      `${summary.completed} completed`,
+    ];
+    if (summary.profitCredited > 0) {
+      parts.push(`${formatCurrency(summary.profitCredited)} profit`);
+    }
+    if (summary.principalReturned > 0) {
+      parts.push(`${formatCurrency(summary.principalReturned)} principal`);
+    }
+    if (summary.errors.length) {
+      parts.push(`${summary.errors.length} error${summary.errors.length === 1 ? "" : "s"}`);
+    }
+    return {
+      ok: summary.errors.length === 0,
+      data: serialize(summary),
+      message: `ROI run: ${parts.join(" · ")}.`,
+    };
+  } catch (error) {
+    return { ok: false, message: error.message || "ROI run failed." };
+  }
 }
 
 export async function getAdminMetrics() {

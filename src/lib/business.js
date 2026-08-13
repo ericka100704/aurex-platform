@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { getSettingsMap, settingNumber } from "@/lib/settings";
 import { toNumber } from "@/lib/serialize";
+import { createNotification, formatCurrency } from "@/lib/notifications";
+import { adjustWallet } from "@/lib/ledger";
 
 /** Current time parts in a given IANA timezone */
 export function getZonedParts(date = new Date(), timeZone = "Asia/Manila") {
@@ -23,6 +25,18 @@ export function getZonedParts(date = new Date(), timeZone = "Asia/Manila") {
     month: Number(parts.month),
     day: Number(parts.day),
   };
+}
+
+/** Calendar date YYYY-MM-DD in an IANA timezone (default Asia/Manila). */
+export function zonedDateKey(date = new Date(), timeZone = "Asia/Manila") {
+  const { year, month, day } = getZonedParts(date, timeZone);
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+export function addDateKeyDays(key, days) {
+  const [year, month, day] = String(key).split("-").map(Number);
+  const utc = new Date(Date.UTC(year, month - 1, day + days));
+  return `${utc.getUTCFullYear()}-${String(utc.getUTCMonth() + 1).padStart(2, "0")}-${String(utc.getUTCDate()).padStart(2, "0")}`;
 }
 
 function parseHHMM(value, fallbackMinutes) {
@@ -59,6 +73,11 @@ export async function createReferralChain(newUserId, referrerId) {
   const levelRate = settingNumber(settings, "referral_level_rate", 1);
   const maxLevel = settingNumber(settings, "referral_max_level", 4);
 
+  const newbie = await prisma.user.findUnique({
+    where: { id: newUserId },
+    select: { fullName: true },
+  });
+
   let currentId = referrerId;
   let level = 1;
 
@@ -71,6 +90,17 @@ export async function createReferralChain(newUserId, referrerId) {
         level,
         commissionRate: rate,
       },
+    });
+
+    await createNotification({
+      userId: currentId,
+      type: "referral_join",
+      title: level === 1 ? "New referral joined" : `New level ${level} member`,
+      body:
+        level === 1
+          ? `${newbie?.fullName || "A member"} registered with your referral code.`
+          : `${newbie?.fullName || "A member"} joined your level ${level} network.`,
+      href: "/dashboard/referrals",
     });
 
     const parent = await prisma.user.findUnique({
@@ -90,6 +120,11 @@ export async function payReferralCommissions(depositorId, depositAmount, tx = pr
   const amount = toNumber(depositAmount);
   if (amount <= 0) return;
 
+  const depositor = await tx.user.findUnique({
+    where: { id: depositorId },
+    select: { fullName: true },
+  });
+
   const links = await tx.referral.findMany({
     where: { referredId: depositorId },
     orderBy: { level: "asc" },
@@ -100,14 +135,28 @@ export async function payReferralCommissions(depositorId, depositAmount, tx = pr
     const commission = Number(((amount * rate) / 100).toFixed(2));
     if (commission <= 0) continue;
 
-    await tx.user.update({
-      where: { id: link.referrerId },
-      data: { balance: { increment: commission } },
+    await adjustWallet(tx, {
+      userId: link.referrerId,
+      type: "REFERRAL",
+      amount: commission,
+      refType: "referral",
+      refId: link.id,
+      note: `${depositor?.fullName || "Member"} · level ${link.level}`,
     });
     await tx.referral.update({
       where: { id: link.id },
       data: { commissionEarned: { increment: commission } },
     });
+    await createNotification(
+      {
+        userId: link.referrerId,
+        type: "referral_commission",
+        title: "Referral commission credited",
+        body: `${formatCurrency(commission)} from ${depositor?.fullName || "a member"} (level ${link.level}).`,
+        href: "/dashboard/referrals",
+      },
+      tx
+    );
   }
 }
 

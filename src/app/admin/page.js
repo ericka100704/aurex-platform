@@ -4,6 +4,7 @@ import PlansEditor from "@/components/admin/PlansEditor";
 import {
   getAdminDashboardMetrics,
   getAllPlans,
+  getPendingDeposits,
   getPendingWithdrawals,
 } from "@/lib/queries";
 import { formatCurrency } from "@/lib/utils";
@@ -11,9 +12,10 @@ import { formatCurrency } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
-  const [m, pendingWithdrawals, plans] = await Promise.all([
+  const [m, pendingWithdrawals, pendingDeposits, plans] = await Promise.all([
     getAdminDashboardMetrics(),
     getPendingWithdrawals(),
+    getPendingDeposits(),
     getAllPlans(),
   ]);
 
@@ -21,12 +23,14 @@ export default async function AdminDashboardPage() {
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard
+          href="/admin/users"
           label="Total Users"
           value={m.totalUsers.toLocaleString()}
           icon="users"
           accent="gold"
         />
         <StatCard
+          href="/admin/investments"
           label="Active Investments"
           value={m.activeInvestments.toLocaleString()}
           icon="layers"
@@ -34,6 +38,7 @@ export default async function AdminDashboardPage() {
           delay={0.05}
         />
         <StatCard
+          href="/admin/deposits"
           label="Deposits Today"
           value={String(m.depositsToday)}
           icon="arrowDown"
@@ -41,6 +46,7 @@ export default async function AdminDashboardPage() {
           delay={0.1}
         />
         <StatCard
+          href="/admin/withdrawals"
           label="Pending Withdrawals"
           value={String(m.pendingWithdrawals)}
           icon="arrowUp"
@@ -48,6 +54,7 @@ export default async function AdminDashboardPage() {
           delay={0.15}
         />
         <StatCard
+          href="/admin/deposits"
           label="Total Volume"
           value={formatCurrency(m.totalVolume)}
           icon="chart"
@@ -55,6 +62,7 @@ export default async function AdminDashboardPage() {
           delay={0.2}
         />
         <StatCard
+          href="/admin/settings"
           label="Site"
           value="AUREX"
           subtext="Live database connected"
@@ -63,6 +71,13 @@ export default async function AdminDashboardPage() {
           delay={0.25}
         />
       </div>
+
+      <ApprovalQueue
+        title="Deposit Approval Queue"
+        subtitle="Verify the receipt, then approve or reject"
+        items={pendingDeposits}
+        type="deposit"
+      />
 
       <ApprovalQueue
         title="Withdrawal Approval Queue"

@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
+import { getJwtSecret } from "@/lib/jwtSecret";
 
 const COOKIE_NAME = "aurex_session";
 
 function getSecret() {
-  return new TextEncoder().encode(
-    process.env.JWT_SECRET || "dev-only-aurex-secret"
-  );
+  return new TextEncoder().encode(getJwtSecret());
 }
 
 async function getPayload(request) {

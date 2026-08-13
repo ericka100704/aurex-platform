@@ -1,0 +1,16 @@
+import { redirect } from "next/navigation";
+import ResetPasswordForm from "@/components/auth/ResetPasswordForm";
+import { getCurrentUser } from "@/lib/auth";
+
+export const dynamic = "force-dynamic";
+
+export default async function ResetPasswordPage({ searchParams }) {
+  const user = await getCurrentUser();
+  if (user) redirect(user.role === "ADMIN" ? "/admin" : "/dashboard");
+
+  return (
+    <div className="flex min-h-screen items-center justify-center px-4 py-10">
+      <ResetPasswordForm token={searchParams?.token || ""} />
+    </div>
+  );
+}

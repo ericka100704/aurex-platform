@@ -25,6 +25,8 @@ export default async function WithdrawPage() {
             ? methods.map((m) => m.name)
             : ["GCash", "GoTyme"]
         }
+        defaultName={user.fullName}
+        defaultPhone={user.phone || ""}
       />
     </div>
   );

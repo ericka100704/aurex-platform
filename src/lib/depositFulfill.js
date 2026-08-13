@@ -2,6 +2,8 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { payReferralCommissions } from "@/lib/business";
 import { toNumber } from "@/lib/serialize";
+import { createNotification, formatCurrency, notifyAdmins } from "@/lib/notifications";
+import { adjustWallet } from "@/lib/ledger";
 
 export function revalidateWalletPaths() {
   revalidatePath("/dashboard");
@@ -61,11 +63,38 @@ export async function fulfillPendingDeposit({
     });
     if (updated.count !== 1) return false;
 
-    await tx.user.update({
-      where: { id: deposit.userId },
-      data: { balance: { increment: toNumber(deposit.amount) } },
+    await adjustWallet(tx, {
+      userId: deposit.userId,
+      type: "DEPOSIT",
+      amount: toNumber(deposit.amount),
+      refType: "deposit",
+      refId: deposit.id,
+      note: "PayMongo deposit",
     });
     await payReferralCommissions(deposit.userId, deposit.amount, tx);
+    await createNotification(
+      {
+        userId: deposit.userId,
+        type: "deposit",
+        title: "We received your deposit",
+        body: `${formatCurrency(deposit.amount)} is now in your wallet.`,
+        href: "/dashboard/wallet",
+      },
+      tx
+    );
+    const payer = await tx.user.findUnique({
+      where: { id: deposit.userId },
+      select: { fullName: true },
+    });
+    await notifyAdmins(
+      {
+        type: "admin_deposit",
+        title: "New deposit",
+        body: `${payer?.fullName || "A user"} deposited ${formatCurrency(deposit.amount)}.`,
+        href: "/admin/deposits",
+      },
+      tx
+    );
     return true;
   });
 

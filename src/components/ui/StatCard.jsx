@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   Wallet,
   TrendingUp,
@@ -35,6 +36,7 @@ export default function StatCard({
   icon = "wallet",
   accent = "gold",
   delay = 0,
+  href,
 }) {
   const Icon = ICONS[icon] || Wallet;
   const accentClass =
@@ -42,8 +44,11 @@ export default function StatCard({
       ? "text-magenta border-magenta/30 bg-magenta/10 shadow-glow-soft"
       : "text-gold border-gold/30 bg-gold/10 shadow-gold";
 
-  return (
-    <GlassCard delay={delay} className="relative overflow-hidden !rounded-[1.75rem]">
+  const card = (
+    <GlassCard
+      delay={delay}
+      className="relative h-full overflow-hidden !rounded-[1.75rem]"
+    >
       <div
         className={cn(
           "absolute -right-8 -top-8 h-28 w-28 rounded-full opacity-30 blur-3xl",
@@ -68,5 +73,13 @@ export default function StatCard({
         </div>
       </div>
     </GlassCard>
+  );
+
+  if (!href) return card;
+
+  return (
+    <Link href={href} className="block h-full cursor-pointer">
+      {card}
+    </Link>
   );
 }

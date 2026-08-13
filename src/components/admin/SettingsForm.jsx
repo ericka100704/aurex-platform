@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import GlassCard from "@/components/ui/GlassCard";
-import { updateSettingsAction } from "@/actions/admin";
+import { runRoiCreditAction, updateSettingsAction } from "@/actions/admin";
 
 export default function SettingsForm({ initialSettings = {} }) {
   const [settings, setSettings] = useState(initialSettings);
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
+  const [roiMessage, setRoiMessage] = useState("");
+  const [roiPending, setRoiPending] = useState(false);
 
   function update(key, value) {
     setSettings((prev) => ({ ...prev, [key]: value }));
@@ -23,6 +25,7 @@ export default function SettingsForm({ initialSettings = {} }) {
   }
 
   return (
+    <div className="space-y-4">
     <GlassCard hover={false}>
       <h3 className="font-display text-lg text-white">System Settings</h3>
       <p className="text-xs text-white/45">
@@ -125,5 +128,31 @@ export default function SettingsForm({ initialSettings = {} }) {
         </div>
       </form>
     </GlassCard>
+
+      <GlassCard hover={false}>
+        <h3 className="font-display text-lg text-white">Daily ROI</h3>
+        <p className="text-xs text-white/45">
+          Credits due daily returns (Asia/Manila), catches up missed days, and
+          returns principal when a plan ends. Production cron runs at 00:05 Manila.
+        </p>
+        <button
+          type="button"
+          className="btn-gold mt-5"
+          disabled={roiPending}
+          onClick={async () => {
+            setRoiPending(true);
+            setRoiMessage("");
+            const result = await runRoiCreditAction();
+            setRoiMessage(result.message || (result.ok ? "Done." : "Failed."));
+            setRoiPending(false);
+          }}
+        >
+          {roiPending ? "Running..." : "Run daily ROI now"}
+        </button>
+        {roiMessage ? (
+          <p className="mt-3 text-xs text-emerald-400">{roiMessage}</p>
+        ) : null}
+      </GlassCard>
+    </div>
   );
 }

@@ -6,19 +6,33 @@ import { requireAdmin, requireUser } from "@/lib/auth";
 import { assertWithdrawalWindowOpen } from "@/lib/business";
 import { getSettingsMap, settingNumber } from "@/lib/settings";
 import { serialize, toNumber } from "@/lib/serialize";
+import { createNotification, formatCurrency, notifyAdmins } from "@/lib/notifications";
+import { adjustWallet } from "@/lib/ledger";
+import { formatPayoutDestination, normalizePhMobile } from "@/lib/utils";
 
 export async function requestWithdrawalAction(formData) {
   const user = await requireUser();
   const amount = Number(formData.get("amount"));
   const methodType = String(formData.get("methodType") || "").trim();
-  const accountDetails = String(formData.get("accountDetails") || "").trim();
+  const accountName = String(formData.get("accountName") || "").trim();
+  const accountNumber = normalizePhMobile(
+    formData.get("accountNumber") || formData.get("accountDetails")
+  );
 
   if (!Number.isFinite(amount) || amount <= 0) {
     return { ok: false, message: "Enter a valid amount." };
   }
-  if (!methodType || !accountDetails) {
-    return { ok: false, message: "Method and account details are required." };
+  if (!methodType) {
+    return { ok: false, message: "Choose a payout method." };
   }
+  if (!accountName) {
+    return { ok: false, message: "Enter the account name on the wallet." };
+  }
+  if (!accountNumber) {
+    return { ok: false, message: "Enter a valid 11-digit mobile number (09XXXXXXXXX)." };
+  }
+
+  const accountDetails = formatPayoutDestination({ accountName, accountNumber });
 
   try {
     await assertWithdrawalWindowOpen();
@@ -39,12 +53,7 @@ export async function requestWithdrawalAction(formData) {
         throw new Error("Insufficient balance.");
       }
 
-      await tx.user.update({
-        where: { id: user.id },
-        data: { balance: { decrement: amount } },
-      });
-
-      return tx.withdrawal.create({
+      const created = await tx.withdrawal.create({
         data: {
           userId: user.id,
           amount,
@@ -53,6 +62,31 @@ export async function requestWithdrawalAction(formData) {
           status: "PENDING",
         },
       });
+
+      await adjustWallet(tx, {
+        userId: user.id,
+        type: "WITHDRAW",
+        amount: -amount,
+        refType: "withdrawal",
+        refId: created.id,
+        note: methodType,
+      });
+
+      return created;
+    });
+
+    await createNotification({
+      userId: user.id,
+      type: "withdrawal",
+      title: "Withdrawal submitted",
+      body: `${formatCurrency(amount)} to ${methodType} ${accountNumber} is pending admin approval.`,
+      href: "/dashboard/withdraw",
+    });
+    await notifyAdmins({
+      type: "admin_withdrawal",
+      title: "New withdrawal request",
+      body: `${user.fullName} requested ${formatCurrency(amount)} to ${accountNumber}.`,
+      href: "/admin/withdrawals",
     });
 
     revalidatePath("/dashboard");
@@ -78,8 +112,8 @@ export async function reviewWithdrawalAction({ id, action, adminNote }) {
 
   try {
     await prisma.$transaction(async (tx) => {
-      const withdrawal = await tx.withdrawal.findUnique({ where: { id } });
-      if (!withdrawal || withdrawal.status !== "PENDING") {
+      const row = await tx.withdrawal.findUnique({ where: { id } });
+      if (!row || row.status !== "PENDING") {
         throw new Error("Withdrawal is not pending.");
       }
 
@@ -93,12 +127,38 @@ export async function reviewWithdrawalAction({ id, action, adminNote }) {
         },
       });
 
-      // Funds already reserved on request; refund if rejected
       if (action === "REJECTED") {
-        await tx.user.update({
-          where: { id: withdrawal.userId },
-          data: { balance: { increment: toNumber(withdrawal.amount) } },
+        await adjustWallet(tx, {
+          userId: row.userId,
+          type: "WITHDRAW_REFUND",
+          amount: toNumber(row.amount),
+          refType: "withdrawal",
+          refId: row.id,
+          note: adminNote || "Withdrawal rejected",
         });
+        await createNotification(
+          {
+            userId: row.userId,
+            type: "withdrawal",
+            title: "Withdrawal rejected",
+            body: adminNote
+              ? `${formatCurrency(row.amount)} was refunded to your wallet. ${adminNote}`
+              : `${formatCurrency(row.amount)} was rejected and refunded to your wallet.`,
+            href: "/dashboard/wallet",
+          },
+          tx
+        );
+      } else {
+        await createNotification(
+          {
+            userId: row.userId,
+            type: "withdrawal",
+            title: "Withdrawal approved",
+            body: `${formatCurrency(row.amount)} is approved and will be sent to ${row.accountDetails || "your wallet"}.`,
+            href: "/dashboard/withdraw",
+          },
+          tx
+        );
       }
     });
 

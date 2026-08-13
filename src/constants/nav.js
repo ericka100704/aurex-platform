@@ -9,6 +9,8 @@ import {
   Share2,
   ClipboardList,
   CreditCard,
+  UserRound,
+  PiggyBank,
 } from "lucide-react";
 
 export const userNav = [
@@ -18,14 +20,17 @@ export const userNav = [
   { label: "Withdraw", href: "/dashboard/withdraw", icon: ArrowUpFromLine },
   { label: "Referrals", href: "/dashboard/referrals", icon: Share2 },
   { label: "Wallet", href: "/dashboard/wallet", icon: Wallet },
+  { label: "Profile", href: "/dashboard/profile", icon: UserRound },
 ];
 
 export const adminNav = [
   { label: "Overview", href: "/admin", icon: LayoutDashboard },
   { label: "Users", href: "/admin/users", icon: Users },
   { label: "Plans", href: "/admin/plans", icon: Layers },
+  { label: "Investments", href: "/admin/investments", icon: PiggyBank },
   { label: "Deposits", href: "/admin/deposits", icon: ClipboardList },
   { label: "Withdrawals", href: "/admin/withdrawals", icon: ArrowUpFromLine },
   { label: "Payment Methods", href: "/admin/methods", icon: CreditCard },
+  { label: "Profile", href: "/admin/profile", icon: UserRound },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];

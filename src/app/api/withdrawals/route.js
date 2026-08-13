@@ -9,7 +9,8 @@ export async function POST(request) {
     const formData = new FormData();
     formData.set("amount", String(body.amount || ""));
     formData.set("methodType", String(body.methodType || body.method || ""));
-    formData.set("accountDetails", String(body.accountDetails || ""));
+    formData.set("accountName", String(body.accountName || ""));
+    formData.set("accountNumber", String(body.accountNumber || body.accountDetails || ""));
     const result = await requestWithdrawalAction(formData);
     return NextResponse.json(result, { status: result.ok ? 201 : 400 });
   } catch {

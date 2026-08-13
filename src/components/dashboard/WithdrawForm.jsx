@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import GlassCard from "@/components/ui/GlassCard";
 import { formatCurrency } from "@/lib/utils";
 import { requestWithdrawalAction } from "@/actions/withdrawals";
@@ -12,9 +12,20 @@ export default function WithdrawForm({
   windowEnd = "16:00",
   releaseTime = "21:00",
   methods = ["GCash", "GoTyme"],
+  defaultName = "",
+  defaultPhone = "",
 }) {
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
+  const [method, setMethod] = useState(methods[0] || "GCash");
+
+  const numberLabel = useMemo(() => {
+    const key = String(method || "").toLowerCase();
+    if (key.includes("gcash")) return "GCash number";
+    if (key.includes("maya") || key.includes("paymaya")) return "Maya number";
+    if (key.includes("gotyme")) return "GoTyme number";
+    return "Wallet / mobile number";
+  }, [method]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -49,8 +60,13 @@ export default function WithdrawForm({
           <input type="number" min="1" step="0.01" required name="amount" className="input-luxury" />
         </div>
         <div>
-          <label className="mb-1 block text-xs text-white/50">Method</label>
-          <select className="input-luxury" name="methodType" defaultValue={methods[0]}>
+          <label className="mb-1 block text-xs text-white/50">Send to</label>
+          <select
+            className="input-luxury"
+            name="methodType"
+            value={method}
+            onChange={(e) => setMethod(e.target.value)}
+          >
             {methods.map((m) => (
               <option key={m} value={m}>
                 {m}
@@ -59,14 +75,29 @@ export default function WithdrawForm({
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-xs text-white/50">Account Details</label>
-          <textarea
+          <label className="mb-1 block text-xs text-white/50">Account name</label>
+          <input
+            className="input-luxury"
+            name="accountName"
+            defaultValue={defaultName}
+            placeholder="Name registered on the wallet"
             required
-            rows={3}
-            name="accountDetails"
-            className="input-luxury resize-none"
-            placeholder="Account name / number"
           />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-white/50">{numberLabel}</label>
+          <input
+            className="input-luxury"
+            name="accountNumber"
+            type="tel"
+            inputMode="numeric"
+            defaultValue={defaultPhone}
+            placeholder="09XXXXXXXXX"
+            required
+          />
+          <p className="mt-1 text-[11px] text-white/40">
+            Payout is sent to this number. Use the 11-digit mobile on your {method} account.
+          </p>
         </div>
         <button type="submit" className="btn-gold w-full" disabled={pending}>
           {pending ? "Submitting..." : "Request Withdrawal"}

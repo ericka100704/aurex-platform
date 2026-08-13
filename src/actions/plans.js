@@ -23,6 +23,7 @@ export async function createPlanAction(data) {
   });
 
   revalidateTag("plans");
+  revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath("/admin/plans");
   revalidatePath("/dashboard");
@@ -48,6 +49,7 @@ export async function updatePlanAction(data) {
   });
 
   revalidateTag("plans");
+  revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath("/admin/plans");
   revalidatePath("/dashboard");
@@ -71,6 +73,7 @@ export async function deletePlanAction(id) {
   }
 
   revalidateTag("plans");
+  revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath("/admin/plans");
   revalidatePath("/dashboard");

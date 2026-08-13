@@ -1,7 +1,5 @@
 "use server";
 
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
 import QRCode from "qrcode";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, requireUser } from "@/lib/auth";
@@ -15,21 +13,13 @@ import {
   expireCheckoutSession,
   getPaidPayment,
   isPaymongoConfigured,
-  isPaymongoMethodType,
   retrieveCheckoutSession,
 } from "@/lib/paymongo";
 import { serialize, toNumber } from "@/lib/serialize";
-
-async function saveProof(file) {
-  if (!file || typeof file === "string" || file.size === 0) return null;
-  const bytes = Buffer.from(await file.arrayBuffer());
-  const ext = (file.name?.split(".").pop() || "jpg").toLowerCase();
-  const filename = `deposit_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-  const dir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, filename), bytes);
-  return `/uploads/${filename}`;
-}
+import { emvWithAmount, GCASH_P2P_PAYLOAD } from "@/lib/qrph";
+import { createNotification, formatCurrency, notifyAdmins } from "@/lib/notifications";
+import { uploadDepositProof } from "@/lib/storage";
+import { adjustWallet } from "@/lib/ledger";
 
 export async function submitDepositAction(formData) {
   const user = await requireUser();
@@ -52,11 +42,21 @@ export async function submitDepositAction(formData) {
     return { ok: false, message: "Payment method unavailable." };
   }
 
+  if (!file || typeof file === "string" || file.size === 0) {
+    return { ok: false, message: "Upload a receipt photo." };
+  }
+
   let proofImageUrl = null;
   try {
-    proofImageUrl = await saveProof(file);
-  } catch {
-    return { ok: false, message: "Failed to upload receipt image." };
+    proofImageUrl = await uploadDepositProof(file, user.id);
+  } catch (error) {
+    return {
+      ok: false,
+      message: error.message || "Failed to upload receipt image.",
+    };
+  }
+  if (!proofImageUrl) {
+    return { ok: false, message: "Upload a receipt photo." };
   }
 
   try {
@@ -69,16 +69,29 @@ export async function submitDepositAction(formData) {
           referenceNote,
           proofImageUrl,
           provider: "manual",
-          status: "APPROVED",
-          reviewedAt: new Date(),
+          status: "PENDING",
         },
       });
 
-      await tx.user.update({
-        where: { id: user.id },
-        data: { balance: { increment: amount } },
-      });
-      await payReferralCommissions(user.id, amount, tx);
+      await createNotification(
+        {
+          userId: user.id,
+          type: "deposit",
+          title: "Deposit submitted",
+          body: `${formatCurrency(amount)} is waiting for admin review.`,
+          href: "/dashboard/deposit",
+        },
+        tx
+      );
+      await notifyAdmins(
+        {
+          type: "admin_deposit",
+          title: "Deposit pending review",
+          body: `${user.fullName} submitted ${formatCurrency(amount)} via ${method.name}.`,
+          href: "/admin/deposits",
+        },
+        tx
+      );
       return created;
     });
 
@@ -86,10 +99,10 @@ export async function submitDepositAction(formData) {
     return {
       ok: true,
       data: serialize(deposit),
-      message: "Deposit credited. Your balance is updated.",
+      message: "Receipt submitted. Your wallet will credit after admin approval.",
     };
   } catch {
-    return { ok: false, message: "Failed to credit deposit." };
+    return { ok: false, message: "Failed to submit deposit." };
   }
 }
 
@@ -101,9 +114,17 @@ export async function reviewDepositAction({ id, action, adminNote }) {
 
   try {
     await prisma.$transaction(async (tx) => {
-      const deposit = await tx.deposit.findUnique({ where: { id } });
+      const deposit = await tx.deposit.findUnique({
+        where: { id },
+        include: { user: { select: { fullName: true } } },
+      });
       if (!deposit || deposit.status !== "PENDING") {
         throw new Error("Deposit is not pending.");
+      }
+      if (deposit.provider === "paymongo") {
+        throw new Error(
+          "PayMongo deposits credit automatically when paid. Do not approve unpaid checkouts."
+        );
       }
 
       await tx.deposit.update({
@@ -117,11 +138,38 @@ export async function reviewDepositAction({ id, action, adminNote }) {
       });
 
       if (action === "APPROVED") {
-        await tx.user.update({
-          where: { id: deposit.userId },
-          data: { balance: { increment: toNumber(deposit.amount) } },
+        await adjustWallet(tx, {
+          userId: deposit.userId,
+          type: "DEPOSIT",
+          amount: toNumber(deposit.amount),
+          refType: "deposit",
+          refId: deposit.id,
+          note: "Manual deposit approved",
         });
         await payReferralCommissions(deposit.userId, deposit.amount, tx);
+        await createNotification(
+          {
+            userId: deposit.userId,
+            type: "deposit",
+            title: "We received your deposit",
+            body: `${formatCurrency(deposit.amount)} is now in your wallet.`,
+            href: "/dashboard/wallet",
+          },
+          tx
+        );
+      } else {
+        await createNotification(
+          {
+            userId: deposit.userId,
+            type: "deposit",
+            title: "Deposit rejected",
+            body: adminNote
+              ? `${formatCurrency(deposit.amount)} was rejected. ${adminNote}`
+              : `${formatCurrency(deposit.amount)} deposit was rejected.`,
+            href: "/dashboard/deposit",
+          },
+          tx
+        );
       }
     });
 
@@ -155,7 +203,7 @@ export async function initiatePaymongoDepositAction({ methodId, amount }) {
   const method = await prisma.depositMethod.findFirst({
     where: { id: String(methodId), isActive: true },
   });
-  if (!method || !isPaymongoMethodType(method.type)) {
+  if (!method) {
     return { ok: false, useManual: true, message: "Use the receipt form for this method." };
   }
 
@@ -262,7 +310,8 @@ export async function getDepositPaymentStatusAction(depositId) {
     return {
       ok: true,
       status: "APPROVED",
-      message: "Deposit credited. Your balance is updated.",
+      amount: toNumber(deposit.amount),
+      message: "We received your deposit. Your wallet has been credited.",
     };
   }
 
@@ -302,7 +351,7 @@ export async function getDepositPaymentStatusAction(depositId) {
           return {
             ok: true,
             status: "APPROVED",
-            message: "Deposit credited. Your balance is updated.",
+            message: "We received your deposit. Your wallet has been credited.",
           };
         }
       }
@@ -314,9 +363,35 @@ export async function getDepositPaymentStatusAction(depositId) {
   return {
     ok: true,
     status: deposit.status,
+    checkoutUrl: deposit.checkoutUrl || null,
+    amount: toNumber(deposit.amount),
     message:
       deposit.status === "PENDING"
         ? "Waiting for GCash payment…"
         : `Deposit is ${deposit.status.toLowerCase()}.`,
   };
+}
+
+export async function generateGcashAmountQrAction(amount) {
+  await requireUser();
+  const pesos = Number(amount);
+  if (!Number.isFinite(pesos) || pesos <= 0) {
+    return { ok: false, message: "Enter a valid deposit amount." };
+  }
+
+  try {
+    const payload = emvWithAmount(GCASH_P2P_PAYLOAD, pesos);
+    const qrDataUrl = await QRCode.toDataURL(payload, {
+      width: 320,
+      margin: 1,
+      errorCorrectionLevel: "M",
+      color: { dark: "#111111", light: "#ffffff" },
+    });
+    return { ok: true, qrDataUrl, amount: pesos };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error.message || "Could not generate the GCash QR.",
+    };
+  }
 }

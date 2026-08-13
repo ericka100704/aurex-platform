@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Logo from "@/components/ui/Logo";
 import PasswordInput from "@/components/ui/PasswordInput";
+import { LegalFooter } from "@/components/legal/LegalLayout";
 import { loginAction } from "@/actions/auth";
 
 export default function LoginForm() {
@@ -40,6 +41,11 @@ export default function LoginForm() {
           placeholder="Password"
           required
         />
+        <p className="text-right text-xs">
+          <Link href="/forgot-password" className="text-gold/80 hover:underline">
+            Forgot password?
+          </Link>
+        </p>
         <button type="submit" className="btn-gold w-full" disabled={pending}>
           {pending ? "Signing in..." : "Sign in"}
         </button>
@@ -53,6 +59,7 @@ export default function LoginForm() {
           Register
         </Link>
       </p>
+      <LegalFooter />
     </div>
   );
 }

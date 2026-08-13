@@ -53,6 +53,7 @@ model User {
   passwordHash  String
   fullName      String
   phone         String?
+  avatarUrl     String?
   role          Role       @default(USER)
   status        UserStatus @default(ACTIVE)
   balance       Decimal    @default(0) @db.Decimal(18, 2)
@@ -62,12 +63,19 @@ model User {
   referrals     User[]     @relation("UserReferrals")
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
+  emailVerifiedAt DateTime?
+  emailVerifyToken String?  @unique
+  emailVerifyExpires DateTime?
+  passwordResetToken String? @unique
+  passwordResetExpires DateTime?
 
   investments   Investment[]
   deposits      Deposit[]
   withdrawals   Withdrawal[]
   referralsMade Referral[]   @relation("Referrer")
   referralsGot  Referral[]   @relation("Referred")
+  notifications Notification[]
+  ledgerEntries WalletLedger[]
 
   @@index([email])
   @@index([referralCode])
@@ -213,4 +221,48 @@ model SystemSetting {
   createdAt DateTime @default(now())
 
   @@map("system_settings")
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  body      String?
+  href      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+enum LedgerType {
+  DEPOSIT
+  INVEST
+  ROI
+  PRINCIPAL
+  WITHDRAW
+  WITHDRAW_REFUND
+  REFERRAL
+}
+
+model WalletLedger {
+  id           String     @id @default(cuid())
+  userId       String
+  type         LedgerType
+  amount       Decimal    @db.Decimal(18, 2)
+  balanceAfter Decimal    @db.Decimal(18, 2)
+  refType      String?
+  refId        String?
+  note         String?
+  createdAt    DateTime   @default(now())
+
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("wallet_ledger")
 }

@@ -1,17 +1,29 @@
 import ApprovalQueue from "@/components/admin/ApprovalQueue";
-import { getRecentDeposits } from "@/lib/queries";
+import { getPendingDeposits, getRecentDeposits } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDepositsPage() {
-  const items = await getRecentDeposits();
+  const [pending, items] = await Promise.all([
+    getPendingDeposits(),
+    getRecentDeposits(),
+  ]);
   return (
-    <ApprovalQueue
-      title="Deposit Records"
-      subtitle="GCash/Maya via PayMongo auto-credit when paid. Manual receipts still appear here."
-      items={items}
-      type="deposit"
-      showStatus={true}
-    />
+    <div className="space-y-6">
+      <ApprovalQueue
+        title="Pending Receipts"
+        subtitle="Approve only after you verify the GCash/GoTyme screenshot."
+        items={pending}
+        type="deposit"
+        showStatus={true}
+      />
+      <ApprovalQueue
+        title="Deposit Records"
+        subtitle="PayMongo auto-credits when paid. Manual receipts need Approve."
+        items={items}
+        type="deposit"
+        showStatus={true}
+      />
+    </div>
   );
 }

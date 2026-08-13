@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Logo from "@/components/ui/Logo";
 import PasswordInput from "@/components/ui/PasswordInput";
+import { LegalFooter } from "@/components/legal/LegalLayout";
 import { registerAction } from "@/actions/auth";
 
 export default function RegisterForm({ referralCode = "" }) {
@@ -43,6 +44,30 @@ export default function RegisterForm({ referralCode = "" }) {
           placeholder="Referral code (optional)"
           defaultValue={referralCode}
         />
+        <label className="flex items-start gap-2 text-[11px] leading-relaxed text-white/50">
+          <input
+            type="checkbox"
+            name="agree"
+            value="1"
+            required
+            className="mt-0.5 accent-[#D4AF37]"
+          />
+          <span>
+            I agree to the{" "}
+            <Link href="/terms" className="text-gold hover:underline" target="_blank">
+              Terms
+            </Link>
+            ,{" "}
+            <Link href="/privacy" className="text-gold hover:underline" target="_blank">
+              Privacy Policy
+            </Link>
+            , and{" "}
+            <Link href="/risk" className="text-gold hover:underline" target="_blank">
+              Risk Disclosure
+            </Link>
+            .
+          </span>
+        </label>
         <button type="submit" className="btn-rose w-full" disabled={pending}>
           {pending ? "Creating..." : "Create account"}
         </button>
@@ -56,6 +81,7 @@ export default function RegisterForm({ referralCode = "" }) {
           Sign in
         </Link>
       </p>
+      <LegalFooter />
     </div>
   );
 }

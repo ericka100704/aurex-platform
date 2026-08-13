@@ -16,6 +16,7 @@ export default async function AdminDashboardLayout({ children }) {  const user =
       subtitle="Dynamic plans, payments, and approvals"
       userName={user.fullName}
       userEmail={user.email}
+      avatarUrl={user.avatarUrl}
     >
       {children}
     </DashboardShell>

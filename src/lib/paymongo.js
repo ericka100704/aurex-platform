@@ -1,4 +1,7 @@
 import crypto from "crypto";
+import { getAppUrl } from "@/lib/appUrl";
+
+export { getAppUrl };
 
 export const PAYMONGO_METHOD_MAP = {
   GCASH: ["gcash", "qrph"],
@@ -6,21 +9,15 @@ export const PAYMONGO_METHOD_MAP = {
 };
 
 export function isPaymongoConfigured() {
-  return Boolean(process.env.PAYMONGO_SECRET_KEY);
+  return Boolean(process.env.PAYMONGO_SECRET_KEY?.trim());
 }
 
 export function isPaymongoMethodType(type) {
-  return Boolean(PAYMONGO_METHOD_MAP[type]);
+  return Boolean(PAYMONGO_METHOD_MAP[type] || type);
 }
 
-export function getAppUrl() {
-  const explicit = process.env.NEXT_PUBLIC_APP_URL;
-  if (explicit) return explicit.replace(/\/$/, "");
-  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
-    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
-  }
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return "http://localhost:3000";
+export function paymongoTypesFor(type) {
+  return PAYMONGO_METHOD_MAP[type] || ["gcash", "qrph"];
 }
 
 function authHeader() {
@@ -77,7 +74,7 @@ export async function createCheckoutSession({
             description: `Wallet deposit ${depositId}`,
           },
         ],
-        payment_method_types: PAYMONGO_METHOD_MAP[methodType] || ["gcash"],
+        payment_method_types: paymongoTypesFor(methodType),
         success_url: `${getAppUrl()}/dashboard/deposit?paid=1&depositId=${depositId}`,
         cancel_url: `${getAppUrl()}/dashboard/deposit?canceled=1`,
         reference_number: depositId,
@@ -147,6 +144,13 @@ export function getPaidPayment(sessionJson) {
     return {
       id: intent?.id,
       amount: intent?.attributes?.amount ?? attrs.line_items?.[0]?.amount,
+    };
+  }
+
+  if (attrs.status === "paid" || attrs.payment_status === "paid") {
+    return {
+      id: sessionJson?.data?.id,
+      amount: attrs.line_items?.[0]?.amount ?? attrs.amount,
     };
   }
   return null;

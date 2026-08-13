@@ -19,19 +19,19 @@ export default async function DepositPage() {
         <ol className="relative z-10 mt-4 space-y-3 text-sm text-white/65">
           {onlinePayments ? (
             <>
-              <li>1. Select GCash or Maya.</li>
-              <li>2. Enter the amount — a payment QR appears automatically.</li>
-              <li>3. Scan with GCash (or open checkout on your phone).</li>
-              <li>4. When PayMongo confirms payment, your wallet credits itself. No Submit click.</li>
-              <li>5. GoTyme / bank transfer still use receipt upload. Withdrawals need admin approval.</li>
+              <li>1. Select a method and enter the amount.</li>
+              <li>2. Click Submit Deposit — a PayMongo GCash checkout QR appears.</li>
+              <li>3. Scan or open checkout and pay the locked amount.</li>
+              <li>4. When PayMongo confirms payment, your wallet credits itself. No receipt.</li>
+              <li>5. Admin approval is only required when you withdraw.</li>
             </>
           ) : (
             <>
-              <li>1. Select GCash — enter the amount to show the QR.</li>
-              <li>2. Scan the GCash QR and send the exact amount.</li>
-              <li>3. Upload your receipt / proof of payment.</li>
-              <li>4. Submit — your balance and referral commissions update immediately.</li>
-              <li>5. Admin approval is only required when you withdraw.</li>
+              <li>1. Select a method and enter the amount.</li>
+              <li>2. Click Submit Deposit — a GCash QR popup appears.</li>
+              <li>3. Pay in GCash, then upload your receipt.</li>
+              <li>4. Status stays pending until an admin verifies the screenshot.</li>
+              <li>5. After approval, your wallet credits and you can invest or withdraw.</li>
             </>
           )}
         </ol>
@@ -46,9 +46,11 @@ export default async function DepositPage() {
               <p className="text-xs text-white/50">
                 {m.accountName} · {m.accountNumber}
               </p>
-              {m.type === "GCASH" || m.qrImageUrl ? (
-                <p className="mt-1 text-[11px] text-white/35">QR shows on the form after you enter an amount.</p>
-              ) : null}
+              <p className="mt-1 text-[11px] text-white/35">
+                {onlinePayments
+                  ? "PayMongo QR after Submit — auto-credits when paid."
+                  : "QR popup after Submit. Admin approves the receipt before credit."}
+              </p>
             </li>
           ))}
         </ul>

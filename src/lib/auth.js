@@ -3,12 +3,12 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { serialize } from "@/lib/serialize";
+import { getJwtSecret } from "@/lib/jwtSecret";
 
 const COOKIE_NAME = "aurex_session";
 
 function getSecret() {
-  const secret = process.env.JWT_SECRET || "dev-only-aurex-secret";
-  return new TextEncoder().encode(secret);
+  return new TextEncoder().encode(getJwtSecret());
 }
 
 export async function createSessionToken(payload) {
@@ -65,12 +65,14 @@ export const getCurrentUser = cache(async () => {
       email: true,
       fullName: true,
       phone: true,
+      avatarUrl: true,
       role: true,
       status: true,
       balance: true,
       referralCode: true,
       referredById: true,
       createdAt: true,
+      emailVerifiedAt: true,
     },
   });
 

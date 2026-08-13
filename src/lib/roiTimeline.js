@@ -20,14 +20,24 @@ function addDays(value, count) {
   return d;
 }
 
-function earnedOnDay(investments, day) {
+function creditedOnDay(inv, day) {
   const t = startOfDay(day).getTime();
-  return investments.reduce((sum, inv) => {
-    const start = startOfDay(inv.startDate || inv.createdAt).getTime();
-    const end = startOfDay(inv.endDate || inv.startDate || inv.createdAt).getTime();
-    if (t >= start && t <= end) return sum + toNumber(inv.dailyReturn);
-    return sum;
-  }, 0);
+  const end = startOfDay(inv.endDate || inv.startDate || inv.createdAt).getTime();
+  const firstCredit = addDays(startOfDay(inv.startDate || inv.createdAt), 1).getTime();
+  if (t < firstCredit || t > end) return 0;
+
+  if (inv.status === "COMPLETED") {
+    return toNumber(inv.dailyReturn);
+  }
+  if (!inv.lastRoiAt) return 0;
+
+  const last = startOfDay(inv.lastRoiAt).getTime();
+  if (t > last) return 0;
+  return toNumber(inv.dailyReturn);
+}
+
+function earnedOnDay(investments, day) {
+  return investments.reduce((sum, inv) => sum + creditedOnDay(inv, day), 0);
 }
 
 function sumRange(investments, from, to) {
@@ -55,25 +65,20 @@ export function buildRoiSeries(investments = [], range = "1W") {
 
   if (range === "1D") {
     const daily = earnedOnDay(investments, today);
-    const hourNow = now.getHours();
-    let accrued = 0;
     const points = [];
     for (let hour = 0; hour < 24; hour += 2) {
-      if (hour <= hourNow) {
-        accrued = Number(((daily * Math.min(hourNow + 1, hour + 2)) / 24).toFixed(2));
-      }
       const h = hour % 12 || 12;
       const suffix = hour < 12 ? "A" : "P";
       points.push({
         key: `h-${hour}`,
         label: `${h}${suffix}`,
-        earned: accrued,
+        earned: daily,
       });
     }
     return {
       points: labelEvery(points, 8),
-      total: accrued,
-      caption: "Today's ROI",
+      total: daily,
+      caption: "Today's credited ROI",
     };
   }
 
@@ -89,7 +94,7 @@ export function buildRoiSeries(investments = [], range = "1W") {
     return {
       points: labelEvery(points, 7),
       total: points.reduce((s, p) => s + p.earned, 0),
-      caption: "Last 7 days",
+      caption: "Last 7 days credited",
     };
   }
 
@@ -105,7 +110,7 @@ export function buildRoiSeries(investments = [], range = "1W") {
     return {
       points: labelEvery(points, 6),
       total: points.reduce((s, p) => s + p.earned, 0),
-      caption: "Last 30 days",
+      caption: "Last 30 days credited",
     };
   }
 
@@ -122,7 +127,7 @@ export function buildRoiSeries(investments = [], range = "1W") {
     return {
       points: labelEvery(points, 6),
       total: points.reduce((s, p) => s + p.earned, 0),
-      caption: "Last 6 months",
+      caption: "Last 6 months credited",
     };
   }
 
@@ -139,6 +144,6 @@ export function buildRoiSeries(investments = [], range = "1W") {
   return {
     points: labelEvery(points, 12),
     total: points.reduce((s, p) => s + p.earned, 0),
-    caption: "Last 12 months",
+    caption: "Last 12 months credited",
   };
 }

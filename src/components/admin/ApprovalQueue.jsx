@@ -55,7 +55,11 @@ export default function ApprovalQueue({
                 <p className="font-medium text-white">{item.user}</p>
                 <p className="text-sm text-gold">{formatCurrency(item.amount)}</p>
                 <p className="text-[11px] text-white/40">
-                  {item.method} · {item.createdAt}
+                  {item.method}
+                  {item.accountDetails ? ` · ${item.accountDetails}` : ""}
+                  {" · "}
+                  {item.createdAt}
+                  {item.provider === "paymongo" ? " · PayMongo" : ""}
                   {item.proofImageUrl ? (
                     <>
                       {" · "}
@@ -74,7 +78,7 @@ export default function ApprovalQueue({
               {showStatus ? (
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge status={item.status} />
-                  {item.status === "PENDING" ? (
+                  {item.status === "PENDING" && item.provider !== "paymongo" ? (
                     <>
                       <button
                         type="button"

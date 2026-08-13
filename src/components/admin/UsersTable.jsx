@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import GlassCard from "@/components/ui/GlassCard";
 import { formatCurrency } from "@/lib/utils";
@@ -21,10 +21,27 @@ const STATUS_DOT = {
   BANNED: "bg-rose-400",
 };
 
+const FILTERS = ["ALL", "ACTIVE", "SUSPENDED", "BANNED"];
+
 export default function UsersTable({ initialUsers = [] }) {
   const [users, setUsers] = useState(initialUsers);
   const [message, setMessage] = useState("");
   const [busyId, setBusyId] = useState(null);
+  const [q, setQ] = useState("");
+  const [status, setStatus] = useState("ALL");
+
+  const filtered = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    return users.filter((user) => {
+      if (status !== "ALL" && user.status !== status) return false;
+      if (!term) return true;
+      return (
+        String(user.fullName || "").toLowerCase().includes(term) ||
+        String(user.email || "").toLowerCase().includes(term) ||
+        String(user.referralCode || "").toLowerCase().includes(term)
+      );
+    });
+  }, [users, q, status]);
 
   function patchLocal(id, patch) {
     setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, ...patch } : u)));
@@ -49,12 +66,38 @@ export default function UsersTable({ initialUsers = [] }) {
 
   return (
     <GlassCard hover={false} className="overflow-hidden p-0">
-      <div className="border-b border-white/5 px-5 py-4">
-        <h3 className="font-display text-lg text-white">User Management</h3>
-        <p className="text-xs text-white/45">
-          Balance is read-only (deposits, invest, withdraw only). Admin can update status.
-        </p>
-        {message ? <p className="mt-1 text-xs text-gold">{message}</p> : null}
+      <div className="flex flex-col gap-3 border-b border-white/5 px-5 py-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h3 className="font-display text-lg text-white">User Management</h3>
+          <p className="text-xs text-white/45">
+            Balance is read-only (deposits, invest, withdraw only). Admin can update status.
+          </p>
+          {message ? <p className="mt-1 text-xs text-gold">{message}</p> : null}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            className="input-luxury min-w-[12rem] py-2 text-sm"
+            placeholder="Search name, email, or ref code"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          <div className="flex flex-wrap gap-1.5">
+            {FILTERS.map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => setStatus(item)}
+                className={`rounded-full border px-3 py-1.5 text-[11px] uppercase tracking-wide ${
+                  status === item
+                    ? "border-magenta/40 bg-magenta/15 text-white"
+                    : "border-white/10 text-white/50 hover:text-white"
+                }`}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
@@ -68,14 +111,14 @@ export default function UsersTable({ initialUsers = [] }) {
             </tr>
           </thead>
           <tbody>
-            {users.length === 0 ? (
+            {filtered.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-white/40">
                   No users found
                 </td>
               </tr>
             ) : (
-              users.map((user) => (
+              filtered.map((user) => (
                 <tr key={user.id} className="border-t border-white/5 text-white/80">
                   <td className="px-4 py-3">
                     <p className="font-medium text-white">{user.fullName}</p>

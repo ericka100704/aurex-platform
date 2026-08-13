@@ -3,6 +3,7 @@ import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { serialize, toNumber } from "@/lib/serialize";
 import { getSettingsMap } from "@/lib/settings";
+import { resolveProofUrl } from "@/lib/storage";
 
 export const getActivePlans = unstable_cache(
   async () => {
@@ -54,6 +55,15 @@ export const getUserInvestments = cache(async (userId) => {
   );
 });
 
+export const getUserLedger = cache(async (userId, take = 80) => {
+  const rows = await prisma.walletLedger.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    take,
+  });
+  return serialize(rows);
+});
+
 export const getUserReferrals = cache(async (userId) => {
   const refs = await prisma.referral.findMany({
     where: { referrerId: userId, level: 1 },
@@ -73,23 +83,25 @@ export const getUserReferrals = cache(async (userId) => {
   );
 });
 
-function mapDepositRows(rows) {
+async function mapDepositRows(rows) {
+  const urls = await Promise.all(rows.map((d) => resolveProofUrl(d.proofImageUrl)));
   return serialize(
-    rows.map((d) => ({
+    rows.map((d, i) => ({
       id: d.id,
       user: d.user.fullName,
       amount: toNumber(d.amount),
       method: d.method?.name || "—",
       createdAt: new Date(d.createdAt).toLocaleString("en-PH"),
       status: d.status,
-      proofImageUrl: d.proofImageUrl,
+      provider: d.provider || "manual",
+      proofImageUrl: urls[i],
     }))
   );
 }
 
 export async function getPendingDeposits() {
   const rows = await prisma.deposit.findMany({
-    where: { status: "PENDING" },
+    where: { status: "PENDING", provider: "manual" },
     include: {
       user: { select: { fullName: true } },
       method: { select: { name: true } },
@@ -123,8 +135,35 @@ export async function getPendingWithdrawals() {
       user: w.user.fullName,
       amount: toNumber(w.amount),
       method: w.methodType,
+      accountDetails: w.accountDetails,
       createdAt: new Date(w.createdAt).toLocaleString("en-PH"),
       status: w.status,
+    }))
+  );
+}
+
+export async function getAdminInvestments() {
+  const rows = await prisma.investment.findMany({
+    include: {
+      user: { select: { fullName: true, email: true } },
+      plan: { select: { name: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+  return serialize(
+    rows.map((inv) => ({
+      id: inv.id,
+      userName: inv.user?.fullName || "—",
+      userEmail: inv.user?.email || "",
+      planName: inv.plan?.name || "Plan",
+      amount: toNumber(inv.amount),
+      dailyReturn: toNumber(inv.dailyReturn),
+      totalExpected: toNumber(inv.totalExpected),
+      earnedAmount: toNumber(inv.earnedAmount),
+      status: inv.status,
+      startDate: inv.startDate,
+      endDate: inv.endDate,
+      lastRoiAt: inv.lastRoiAt,
     }))
   );
 }
