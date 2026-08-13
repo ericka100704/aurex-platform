@@ -8,10 +8,10 @@ export default async function AdminDepositsPage() {
   return (
     <ApprovalQueue
       title="Deposit Records"
-      subtitle="Deposits credit instantly. Review receipts here."
+      subtitle="GCash/Maya via PayMongo auto-credit when paid. Manual receipts still appear here."
       items={items}
       type="deposit"
-      showStatus={false}
+      showStatus={true}
     />
   );
 }

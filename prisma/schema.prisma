@@ -138,24 +138,30 @@ model DepositMethod {
 }
 
 model Deposit {
-  id              String            @id @default(cuid())
-  userId          String
-  methodId        String?
-  amount          Decimal           @db.Decimal(18, 2)
-  proofImageUrl   String?
-  referenceNote   String?
-  status          TransactionStatus @default(PENDING)
-  adminNote       String?
-  reviewedById    String?
-  reviewedAt      DateTime?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  id                String            @id @default(cuid())
+  userId            String
+  methodId          String?
+  amount            Decimal           @db.Decimal(18, 2)
+  proofImageUrl     String?
+  referenceNote     String?
+  status            TransactionStatus @default(PENDING)
+  adminNote         String?
+  reviewedById      String?
+  reviewedAt        DateTime?
+  provider          String?
+  providerSessionId String?           @unique
+  providerPaymentId String?
+  checkoutUrl       String?
+  expiresAt         DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
-  user            User              @relation(fields: [userId], references: [id])
-  method          DepositMethod?    @relation(fields: [methodId], references: [id])
+  user              User              @relation(fields: [userId], references: [id])
+  method            DepositMethod?    @relation(fields: [methodId], references: [id])
 
   @@index([userId])
   @@index([status])
+  @@index([providerSessionId])
   @@map("deposits")
 }
 

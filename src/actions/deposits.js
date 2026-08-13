@@ -1,11 +1,23 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import QRCode from "qrcode";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, requireUser } from "@/lib/auth";
 import { payReferralCommissions } from "@/lib/business";
+import {
+  fulfillPendingDeposit,
+  revalidateWalletPaths,
+} from "@/lib/depositFulfill";
+import {
+  createCheckoutSession,
+  expireCheckoutSession,
+  getPaidPayment,
+  isPaymongoConfigured,
+  isPaymongoMethodType,
+  retrieveCheckoutSession,
+} from "@/lib/paymongo";
 import { serialize, toNumber } from "@/lib/serialize";
 
 async function saveProof(file) {
@@ -56,6 +68,7 @@ export async function submitDepositAction(formData) {
           amount,
           referenceNote,
           proofImageUrl,
+          provider: "manual",
           status: "APPROVED",
           reviewedAt: new Date(),
         },
@@ -69,13 +82,7 @@ export async function submitDepositAction(formData) {
       return created;
     });
 
-    revalidatePath("/dashboard");
-    revalidatePath("/dashboard/deposit");
-    revalidatePath("/dashboard/wallet");
-    revalidatePath("/dashboard/referrals");
-    revalidatePath("/admin");
-    revalidatePath("/admin/deposits");
-    revalidatePath("/admin/users");
+    revalidateWalletPaths();
     return {
       ok: true,
       data: serialize(deposit),
@@ -118,14 +125,198 @@ export async function reviewDepositAction({ id, action, adminNote }) {
       }
     });
 
-    revalidatePath("/admin");
-    revalidatePath("/admin/deposits");
-    revalidatePath("/admin/users");
-    revalidatePath("/dashboard");
-    revalidatePath("/dashboard/wallet");
-    revalidatePath("/dashboard/referrals");
+    revalidateWalletPaths();
     return { ok: true, message: `Deposit ${action.toLowerCase()}.` };
   } catch (e) {
     return { ok: false, message: e.message || "Review failed." };
   }
+}
+
+const QR_TTL_MS = 30 * 60 * 1000;
+
+export async function initiatePaymongoDepositAction({ methodId, amount }) {
+  const user = await requireUser();
+  const pesos = Number(amount);
+
+  if (!isPaymongoConfigured()) {
+    return {
+      ok: false,
+      useManual: true,
+      message: "Online GCash payments are not configured yet.",
+    };
+  }
+  if (!Number.isFinite(pesos) || pesos <= 0) {
+    return { ok: false, message: "Enter a valid deposit amount." };
+  }
+  if (!methodId) {
+    return { ok: false, message: "Select a payment method." };
+  }
+
+  const method = await prisma.depositMethod.findFirst({
+    where: { id: String(methodId), isActive: true },
+  });
+  if (!method || !isPaymongoMethodType(method.type)) {
+    return { ok: false, useManual: true, message: "Use the receipt form for this method." };
+  }
+
+  const previous = await prisma.deposit.findMany({
+    where: {
+      userId: user.id,
+      status: "PENDING",
+      provider: "paymongo",
+    },
+    select: { id: true, providerSessionId: true },
+  });
+
+  await Promise.all(
+    previous.map((row) => expireCheckoutSession(row.providerSessionId))
+  );
+
+  if (previous.length) {
+    await prisma.deposit.updateMany({
+      where: { id: { in: previous.map((row) => row.id) } },
+      data: {
+        status: "CANCELLED",
+        adminNote: "Replaced by a new payment QR",
+      },
+    });
+  }
+
+  const deposit = await prisma.deposit.create({
+    data: {
+      userId: user.id,
+      methodId: method.id,
+      amount: pesos,
+      status: "PENDING",
+      provider: "paymongo",
+      expiresAt: new Date(Date.now() + QR_TTL_MS),
+    },
+  });
+
+  try {
+    const session = await createCheckoutSession({
+      amount: pesos,
+      depositId: deposit.id,
+      methodType: method.type,
+      description: `AUREX deposit — ${user.email}`,
+      customer: user,
+    });
+    const checkoutUrl = session?.data?.attributes?.checkout_url;
+    const sessionId = session?.data?.id;
+    if (!checkoutUrl || !sessionId) {
+      throw new Error("PayMongo did not return a checkout URL.");
+    }
+
+    const qrDataUrl = await QRCode.toDataURL(checkoutUrl, {
+      width: 280,
+      margin: 2,
+      errorCorrectionLevel: "M",
+      color: { dark: "#111111", light: "#ffffff" },
+    });
+
+    const updated = await prisma.deposit.update({
+      where: { id: deposit.id },
+      data: {
+        providerSessionId: sessionId,
+        checkoutUrl,
+        referenceNote: sessionId,
+      },
+    });
+
+    return {
+      ok: true,
+      depositId: updated.id,
+      checkoutUrl,
+      qrDataUrl,
+      expiresAt: updated.expiresAt,
+      amount: pesos,
+      methodName: method.name,
+      methodType: method.type,
+      message: `Scan the ${method.name} QR or open checkout to pay. Your deposit will credit automatically.`,
+    };
+  } catch (error) {
+    await prisma.deposit.update({
+      where: { id: deposit.id },
+      data: {
+        status: "CANCELLED",
+        adminNote: error.message || "PayMongo checkout failed",
+      },
+    });
+    return {
+      ok: false,
+      message: error.message || "Failed to create GCash payment.",
+    };
+  }
+}
+
+export async function getDepositPaymentStatusAction(depositId) {
+  const user = await requireUser();
+  if (!depositId) return { ok: false, message: "Missing deposit." };
+
+  const deposit = await prisma.deposit.findFirst({
+    where: { id: String(depositId), userId: user.id },
+  });
+  if (!deposit) return { ok: false, message: "Deposit not found." };
+
+  if (deposit.status === "APPROVED") {
+    return {
+      ok: true,
+      status: "APPROVED",
+      message: "Deposit credited. Your balance is updated.",
+    };
+  }
+
+  if (
+    deposit.status === "PENDING" &&
+    deposit.expiresAt &&
+    new Date(deposit.expiresAt).getTime() < Date.now()
+  ) {
+    await prisma.deposit.update({
+      where: { id: deposit.id },
+      data: { status: "CANCELLED", adminNote: "QR / checkout expired" },
+    });
+    return {
+      ok: true,
+      status: "CANCELLED",
+      message: "This QR expired. Enter the amount again to generate a new one.",
+    };
+  }
+
+  if (
+    deposit.status === "PENDING" &&
+    deposit.provider === "paymongo" &&
+    deposit.providerSessionId &&
+    isPaymongoConfigured()
+  ) {
+    try {
+      const session = await retrieveCheckoutSession(deposit.providerSessionId);
+      const paid = getPaidPayment(session);
+      if (paid) {
+        const result = await fulfillPendingDeposit({
+          depositId: deposit.id,
+          sessionId: deposit.providerSessionId,
+          paymentId: paid.id,
+          paidAmountCentavos: paid.amount,
+        });
+        if (result.ok) {
+          return {
+            ok: true,
+            status: "APPROVED",
+            message: "Deposit credited. Your balance is updated.",
+          };
+        }
+      }
+    } catch {
+      // Keep waiting — webhook may still arrive.
+    }
+  }
+
+  return {
+    ok: true,
+    status: deposit.status,
+    message:
+      deposit.status === "PENDING"
+        ? "Waiting for GCash payment…"
+        : `Deposit is ${deposit.status.toLowerCase()}.`,
+  };
 }
