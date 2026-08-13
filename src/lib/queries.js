@@ -1,27 +1,37 @@
+import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { serialize, toNumber } from "@/lib/serialize";
 import { getSettingsMap } from "@/lib/settings";
 
-export async function getActivePlans() {
-  const plans = await prisma.plan.findMany({
-    where: { status: "ACTIVE" },
-    orderBy: { sortOrder: "asc" },
-  });
-  return serialize(plans);
-}
+export const getActivePlans = unstable_cache(
+  async () => {
+    const plans = await prisma.plan.findMany({
+      where: { status: "ACTIVE" },
+      orderBy: { sortOrder: "asc" },
+    });
+    return serialize(plans);
+  },
+  ["active-plans"],
+  { revalidate: 60, tags: ["plans"] }
+);
 
 export async function getAllPlans() {
   const plans = await prisma.plan.findMany({ orderBy: { sortOrder: "asc" } });
   return serialize(plans);
 }
 
-export async function getActiveDepositMethods() {
-  const methods = await prisma.depositMethod.findMany({
-    where: { isActive: true },
-    orderBy: { sortOrder: "asc" },
-  });
-  return serialize(methods);
-}
+export const getActiveDepositMethods = unstable_cache(
+  async () => {
+    const methods = await prisma.depositMethod.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+    });
+    return serialize(methods);
+  },
+  ["active-deposit-methods"],
+  { revalidate: 60, tags: ["deposit-methods"] }
+);
 
 export async function getAllDepositMethods() {
   const methods = await prisma.depositMethod.findMany({
@@ -30,7 +40,7 @@ export async function getAllDepositMethods() {
   return serialize(methods);
 }
 
-export async function getUserInvestments(userId) {
+export const getUserInvestments = cache(async (userId) => {
   const investments = await prisma.investment.findMany({
     where: { userId },
     include: { plan: true },
@@ -42,9 +52,9 @@ export async function getUserInvestments(userId) {
       planName: inv.plan?.name,
     }))
   );
-}
+});
 
-export async function getUserReferrals(userId) {
+export const getUserReferrals = cache(async (userId) => {
   const refs = await prisma.referral.findMany({
     where: { referrerId: userId, level: 1 },
     include: {
@@ -61,14 +71,12 @@ export async function getUserReferrals(userId) {
       level: r.level,
     }))
   );
-}
+});
 
-export async function getRoiTimeline(userId) {
-  const investments = await prisma.investment.findMany({
-    where: { userId, status: "ACTIVE" },
-    select: { dailyReturn: true },
-  });
-  const daily = investments.reduce((s, i) => s + toNumber(i.dailyReturn), 0);
+export function roiTimelineFromInvestments(investments = []) {
+  const daily = investments
+    .filter((i) => i.status === "ACTIVE")
+    .reduce((s, i) => s + toNumber(i.dailyReturn), 0);
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   return days.map((day) => ({ day, earned: daily }));
 }

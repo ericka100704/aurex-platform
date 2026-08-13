@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
@@ -53,7 +54,7 @@ export async function getSession() {
   return verifySessionToken(token);
 }
 
-export async function getCurrentUser() {
+export const getCurrentUser = cache(async () => {
   const session = await getSession();
   if (!session?.sub) return null;
 
@@ -75,7 +76,7 @@ export async function getCurrentUser() {
 
   if (!user || user.status === "BANNED") return null;
   return serialize(user);
-}
+});
 
 export async function requireUser() {
   const user = await getCurrentUser();

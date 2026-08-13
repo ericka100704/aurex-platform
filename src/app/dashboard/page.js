@@ -8,9 +8,9 @@ import PlanCard from "@/components/dashboard/PlanCard";
 import { requireUser } from "@/lib/auth";
 import {
   getActivePlans,
-  getRoiTimeline,
   getUserInvestments,
   getUserReferrals,
+  roiTimelineFromInvestments,
 } from "@/lib/queries";
 import { formatCurrency } from "@/lib/utils";
 
@@ -18,12 +18,12 @@ export const dynamic = "force-dynamic";
 
 export default async function UserDashboardPage() {
   const user = await requireUser();
-  const [plans, investments, referrals, roiTimeline] = await Promise.all([
+  const [plans, investments, referrals] = await Promise.all([
     getActivePlans(),
     getUserInvestments(user.id),
     getUserReferrals(user.id),
-    getRoiTimeline(user.id),
   ]);
+  const roiTimeline = roiTimelineFromInvestments(investments);
 
   const active = investments.filter((i) => i.status === "ACTIVE");
   const locked = active.reduce((s, i) => s + Number(i.amount || 0), 0);

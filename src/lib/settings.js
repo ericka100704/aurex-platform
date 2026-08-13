@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 
 const DEFAULTS = {
@@ -14,14 +15,18 @@ const DEFAULTS = {
   withdrawal_timezone: "Asia/Manila",
 };
 
-export async function getSettingsMap() {
-  const rows = await prisma.systemSetting.findMany();
-  const map = { ...DEFAULTS };
-  for (const row of rows) {
-    map[row.key] = row.value;
-  }
-  return map;
-}
+export const getSettingsMap = unstable_cache(
+  async () => {
+    const rows = await prisma.systemSetting.findMany();
+    const map = { ...DEFAULTS };
+    for (const row of rows) {
+      map[row.key] = row.value;
+    }
+    return map;
+  },
+  ["settings-map"],
+  { revalidate: 60, tags: ["settings"] }
+);
 
 export async function getSetting(key) {
   const row = await prisma.systemSetting.findUnique({ where: { key } });

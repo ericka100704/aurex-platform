@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { serialize } from "@/lib/serialize";
@@ -22,6 +22,7 @@ export async function createPlanAction(data) {
     },
   });
 
+  revalidateTag("plans");
   revalidatePath("/admin");
   revalidatePath("/admin/plans");
   revalidatePath("/dashboard");
@@ -46,6 +47,7 @@ export async function updatePlanAction(data) {
     },
   });
 
+  revalidateTag("plans");
   revalidatePath("/admin");
   revalidatePath("/admin/plans");
   revalidatePath("/dashboard");
@@ -68,6 +70,7 @@ export async function deletePlanAction(id) {
     await prisma.plan.delete({ where: { id } });
   }
 
+  revalidateTag("plans");
   revalidatePath("/admin");
   revalidatePath("/admin/plans");
   revalidatePath("/dashboard");

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { serialize } from "@/lib/serialize";
@@ -41,6 +41,7 @@ export async function createDepositMethodAction(data) {
     },
   });
 
+  revalidateTag("deposit-methods");
   revalidatePath("/admin/methods");
   revalidatePath("/dashboard/deposit");
   return { ok: true, data: serialize(method) };
@@ -56,6 +57,7 @@ export async function toggleDepositMethodAction(id) {
     data: { isActive: !current.isActive },
   });
 
+  revalidateTag("deposit-methods");
   revalidatePath("/admin/methods");
   revalidatePath("/dashboard/deposit");
   return { ok: true, data: serialize(method) };
@@ -82,6 +84,7 @@ export async function updateSettingsAction(values) {
     });
   }
 
+  revalidateTag("settings");
   revalidatePath("/admin/settings");
   revalidatePath("/dashboard/withdraw");
   revalidatePath("/dashboard/referrals");
