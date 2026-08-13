@@ -12,7 +12,6 @@ export default function DashboardShell({
   subtitle,
   userName,
   userEmail,
-  avatarUrl,
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -30,7 +29,6 @@ export default function DashboardShell({
           subtitle={subtitle}
           userName={userName}
           userEmail={userEmail}
-          avatarUrl={avatarUrl}
           variant={variant}
           onMenuClick={() => setMobileOpen(true)}
         />

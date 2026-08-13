@@ -16,7 +16,6 @@ export default async function UserDashboardLayout({ children }) {  const user = 
       subtitle="Here's your investment portfolio overview."
       userName={user.fullName}
       userEmail={user.email}
-      avatarUrl={user.avatarUrl}
     >
       {children}
     </DashboardShell>

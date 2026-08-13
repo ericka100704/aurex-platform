@@ -9,17 +9,10 @@ export default function Topbar({
   title,
   subtitle,
   userName = "Investor",
-  avatarUrl = "",
   variant = "user",
   onMenuClick,
 }) {
   const firstName = userName.split(" ")[0] || userName;
-  const initials = userName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 
   return (
     <header className="relative z-40 px-4 pb-2 pt-3 md:px-10 md:pb-3 md:pt-5 lg:px-12">
@@ -54,24 +47,6 @@ export default function Topbar({
             aria-label="Settings"
           >
             <Settings className="h-4 w-4" />
-          </Link>
-
-          <Link
-            href={variant === "user" ? "/dashboard/profile" : "/admin/profile"}
-            className="shrink-0 overflow-hidden rounded-full border border-white/10"
-            aria-label="Profile"
-          >
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt=""
-                className="h-9 w-9 object-cover md:h-10 md:w-10"
-              />
-            ) : (
-              <span className="flex h-9 w-9 items-center justify-center bg-pink-glow text-[11px] font-bold text-white shadow-glow md:h-10 md:w-10 md:text-xs">
-                {initials}
-              </span>
-            )}
           </Link>
           <LogoutButton />
         </div>
