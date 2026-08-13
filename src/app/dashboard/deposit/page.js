@@ -27,8 +27,8 @@ export default async function DepositPage() {
             </>
           ) : (
             <>
-              <li>1. Select GCash or GoTyme (admin-configured).</li>
-              <li>2. Transfer the exact amount to the shown account.</li>
+              <li>1. Select GCash — enter the amount to show the QR.</li>
+              <li>2. Scan the GCash QR and send the exact amount.</li>
               <li>3. Upload your receipt / proof of payment.</li>
               <li>4. Submit — your balance and referral commissions update immediately.</li>
               <li>5. Admin approval is only required when you withdraw.</li>
@@ -46,6 +46,9 @@ export default async function DepositPage() {
               <p className="text-xs text-white/50">
                 {m.accountName} · {m.accountNumber}
               </p>
+              {m.type === "GCASH" || m.qrImageUrl ? (
+                <p className="mt-1 text-[11px] text-white/35">QR shows on the form after you enter an amount.</p>
+              ) : null}
             </li>
           ))}
         </ul>

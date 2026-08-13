@@ -12,6 +12,12 @@ import {
 } from "@/actions/deposits";
 
 const ONLINE_TYPES = new Set(["GCASH", "MAYA"]);
+const DEFAULT_QR = { GCASH: "/qr/gcash.png" };
+
+function methodQrUrl(method) {
+  if (!method) return null;
+  return method.qrImageUrl || DEFAULT_QR[method.type] || null;
+}
 
 export default function DepositForm({ methods = [], onlinePayments = false }) {
   const [methodId, setMethodId] = useState(methods[0]?.id || "");
@@ -29,6 +35,10 @@ export default function DepositForm({ methods = [], onlinePayments = false }) {
   );
   const isOnline =
     onlinePayments && selected && ONLINE_TYPES.has(selected.type) && !useManual;
+  const pesos = Number(amount);
+  const hasAmount = Number.isFinite(pesos) && pesos > 0;
+  const staticQr = methodQrUrl(selected);
+  const showStaticQr = !isOnline && Boolean(staticQr);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -165,7 +175,9 @@ export default function DepositForm({ methods = [], onlinePayments = false }) {
       <p className="text-xs text-white/45">
         {isOnline
           ? "Set an amount — a GCash QR appears. Paid deposits credit automatically."
-          : "Upload proof — credited to your wallet right away"}
+          : showStaticQr
+            ? "Enter an amount to show the GCash QR, scan, then upload your receipt."
+            : "Upload proof — credited to your wallet right away"}
       </p>
 
       <form onSubmit={isOnline ? (e) => e.preventDefault() : handleSubmit} className="mt-4 space-y-3">
@@ -271,6 +283,30 @@ export default function DepositForm({ methods = [], onlinePayments = false }) {
           </>
         ) : (
           <>
+            {showStaticQr ? (
+              <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-center">
+                {hasAmount ? (
+                  <>
+                    <p className="text-xs text-white/50">
+                      Scan this {selected?.name} QR · {formatCurrency(pesos)}
+                    </p>
+                    <img
+                      src={staticQr}
+                      alt={`${selected?.name} QR`}
+                      className="mx-auto mt-3 w-full max-w-[280px] rounded-xl bg-[#0070e0] p-1"
+                    />
+                    <p className="mt-3 text-xs text-gold">
+                      Pay the exact amount, then upload your receipt below.
+                    </p>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center gap-2 py-6 text-white/45">
+                    <QrCode className="h-8 w-8 text-white/30" />
+                    <p className="text-sm">Enter an amount to show the QR code</p>
+                  </div>
+                )}
+              </div>
+            ) : null}
             <div>
               <label className="mb-1 block text-xs text-white/50">Reference Note</label>
               <input
