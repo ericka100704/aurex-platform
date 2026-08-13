@@ -18,13 +18,19 @@ export default function WithdrawForm({
 
   async function handleSubmit(e) {
     e.preventDefault();
+    const form = e.currentTarget;
     setPending(true);
     setMessage("");
-    const formData = new FormData(e.currentTarget);
-    const result = await requestWithdrawalAction(formData);
-    setMessage(result.message);
-    if (result.ok) e.currentTarget.reset();
-    setPending(false);
+    try {
+      const formData = new FormData(form);
+      const result = await requestWithdrawalAction(formData);
+      setMessage(result.message);
+      if (result.ok) form.reset();
+    } catch {
+      setMessage("Something went wrong. Please try again.");
+    } finally {
+      setPending(false);
+    }
   }
 
   return (

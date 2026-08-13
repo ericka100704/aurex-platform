@@ -12,16 +12,22 @@ export default function DepositForm({ methods = [] }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    const form = e.currentTarget;
     setPending(true);
     setMessage("");
-    const formData = new FormData(e.currentTarget);
-    const result = await submitDepositAction(formData);
-    setMessage(result.message);
-    if (result.ok) {
-      e.currentTarget.reset();
-      setUploadKey((k) => k + 1);
+    try {
+      const formData = new FormData(form);
+      const result = await submitDepositAction(formData);
+      setMessage(result.message);
+      if (result.ok) {
+        form.reset();
+        setUploadKey((k) => k + 1);
+      }
+    } catch {
+      setMessage("Something went wrong. Please try again.");
+    } finally {
+      setPending(false);
     }
-    setPending(false);
   }
 
   if (!methods.length) {
