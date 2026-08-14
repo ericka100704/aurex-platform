@@ -49,7 +49,27 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState([]);
   const [unread, setUnread] = useState(0);
+  const [panelStyle, setPanelStyle] = useState(null);
   const rootRef = useRef(null);
+
+  function placePanel() {
+    const el = rootRef.current;
+    if (!el || typeof window === "undefined") return;
+    const rect = el.getBoundingClientRect();
+    const gap = 8;
+    const margin = 12;
+    const top = rect.bottom + gap;
+    if (window.innerWidth < 768) {
+      setPanelStyle({ top, left: margin, right: margin, width: "auto" });
+      return;
+    }
+    setPanelStyle({
+      top,
+      right: Math.max(margin, window.innerWidth - rect.right),
+      left: "auto",
+      width: 352,
+    });
+  }
 
   async function load() {
     const result = await getNotificationsAction();
@@ -72,12 +92,25 @@ export default function NotificationBell() {
       if (e.key === "Escape") setOpen(false);
     }
     document.addEventListener("mousedown", onClick);
+    document.addEventListener("touchstart", onClick);
     window.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("touchstart", onClick);
       window.removeEventListener("keydown", onKey);
     };
   }, []);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    placePanel();
+    window.addEventListener("resize", placePanel);
+    window.addEventListener("scroll", placePanel, true);
+    return () => {
+      window.removeEventListener("resize", placePanel);
+      window.removeEventListener("scroll", placePanel, true);
+    };
+  }, [open]);
 
   async function openPanel() {
     const next = !open;
@@ -121,8 +154,11 @@ export default function NotificationBell() {
       </button>
 
       {open ? (
-        <div className="absolute right-0 z-[60] mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-white/10 bg-[#141414] shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
-          <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+        <div
+          className="fixed z-[80] max-h-[min(22rem,calc(100dvh-6rem))] overflow-hidden rounded-2xl border border-white/10 bg-[#141414] shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
+          style={panelStyle || { visibility: "hidden" }}
+        >
+          <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
             <p className="text-sm font-medium text-white">Notifications</p>
             {unread > 0 ? (
               <button
@@ -151,11 +187,11 @@ export default function NotificationBell() {
                       setOpen(false);
                     }}
                   >
-                    <p className={`text-sm ${unreadItem ? "text-white" : "text-white/70"}`}>
+                    <p className={`break-words text-sm ${unreadItem ? "text-white" : "text-white/70"}`}>
                       {item.title}
                     </p>
                     {item.body ? (
-                      <p className="mt-0.5 text-[12px] leading-snug text-white/45">{item.body}</p>
+                      <p className="mt-0.5 break-words text-[12px] leading-snug text-white/45">{item.body}</p>
                     ) : null}
                     <p className="mt-1 text-[10px] uppercase tracking-wide text-white/30">
                       {timeAgo(item.createdAt)}
