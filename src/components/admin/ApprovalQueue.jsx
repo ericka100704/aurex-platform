@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import GlassCard from "@/components/ui/GlassCard";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { formatCurrency } from "@/lib/utils";
-import { reviewDepositAction } from "@/actions/deposits";
-import { reviewWithdrawalAction } from "@/actions/withdrawals";
 
 export default function ApprovalQueue({
   title,
@@ -14,24 +13,37 @@ export default function ApprovalQueue({
   type = "deposit",
   showStatus = true,
 }) {
+  const router = useRouter();
   const [items, setItems] = useState(initialItems);
   const [busyId, setBusyId] = useState(null);
 
+  useEffect(() => {
+    setItems(initialItems);
+  }, [initialItems]);
+
   async function review(id, status) {
     setBusyId(id);
-    const result =
-      type === "deposit"
-        ? await reviewDepositAction({ id, action: status })
-        : await reviewWithdrawalAction({ id, action: status });
-
-    if (result.ok) {
+    try {
+      const res = await fetch("/api/admin/approvals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ type, id, action: status }),
+      });
+      const result = await res.json().catch(() => null);
+      if (!result?.ok) {
+        alert(result?.message || "Action failed");
+        return;
+      }
       setItems((prev) =>
         prev.map((item) => (item.id === id ? { ...item, status } : item))
       );
-    } else {
-      alert(result.message || "Action failed");
+      router.refresh();
+    } catch (error) {
+      alert(error.message || "Action failed");
+    } finally {
+      setBusyId(null);
     }
-    setBusyId(null);
   }
 
   return (
@@ -60,11 +72,15 @@ export default function ApprovalQueue({
                   {" · "}
                   {item.createdAt}
                   {item.provider === "paymongo" ? " · PayMongo" : ""}
-                  {item.proofImageUrl ? (
+                  {item.hasProof || item.proofImageUrl ? (
                     <>
                       {" · "}
                       <a
-                        href={item.proofImageUrl}
+                        href={
+                          type === "deposit"
+                            ? `/api/admin/deposit-proof/${item.id}`
+                            : item.proofImageUrl
+                        }
                         target="_blank"
                         rel="noreferrer"
                         className="text-rose underline"
@@ -86,7 +102,7 @@ export default function ApprovalQueue({
                         onClick={() => review(item.id, "APPROVED")}
                         className="btn-gold !px-3 !py-1.5 text-xs"
                       >
-                        Approve
+                        {busyId === item.id ? "Saving…" : "Approve"}
                       </button>
                       <button
                         type="button"

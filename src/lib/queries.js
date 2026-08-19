@@ -3,7 +3,6 @@ import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { serialize, toNumber } from "@/lib/serialize";
 import { getSettingsMap } from "@/lib/settings";
-import { resolveProofUrl } from "@/lib/storage";
 
 export const getActivePlans = unstable_cache(
   async () => {
@@ -83,10 +82,9 @@ export const getUserReferrals = cache(async (userId) => {
   );
 });
 
-async function mapDepositRows(rows) {
-  const urls = await Promise.all(rows.map((d) => resolveProofUrl(d.proofImageUrl)));
+function mapDepositRows(rows) {
   return serialize(
-    rows.map((d, i) => ({
+    rows.map((d) => ({
       id: d.id,
       user: d.user.fullName,
       amount: toNumber(d.amount),
@@ -94,14 +92,17 @@ async function mapDepositRows(rows) {
       createdAt: new Date(d.createdAt).toLocaleString("en-PH"),
       status: d.status,
       provider: d.provider || "manual",
-      proofImageUrl: urls[i],
+      hasProof: Boolean(d.proofImageUrl),
     }))
   );
 }
 
 export async function getPendingDeposits() {
   const rows = await prisma.deposit.findMany({
-    where: { status: "PENDING", provider: "manual" },
+    where: {
+      status: "PENDING",
+      OR: [{ provider: "manual" }, { provider: null }],
+    },
     include: {
       user: { select: { fullName: true } },
       method: { select: { name: true } },

@@ -106,75 +106,97 @@ export async function submitDepositAction(formData) {
 }
 
 export async function reviewDepositAction({ id, action, adminNote }) {
-  const admin = await requireAdmin();
-  if (!["APPROVED", "REJECTED"].includes(action)) {
-    return { ok: false, message: "Invalid action." };
-  }
-
   try {
-    await prisma.$transaction(async (tx) => {
-      const deposit = await tx.deposit.findUnique({
-        where: { id },
-        include: { user: { select: { fullName: true } } },
-      });
-      if (!deposit || deposit.status !== "PENDING") {
-        throw new Error("Deposit is not pending.");
-      }
-      if (deposit.provider === "paymongo") {
-        throw new Error(
-          "PayMongo deposits credit automatically when paid. Do not approve unpaid checkouts."
-        );
-      }
+    const admin = await requireAdmin();
+    if (!["APPROVED", "REJECTED"].includes(action)) {
+      return { ok: false, message: "Invalid action." };
+    }
 
-      await tx.deposit.update({
-        where: { id },
-        data: {
-          status: action,
-          adminNote: adminNote || null,
-          reviewedById: admin.id,
-          reviewedAt: new Date(),
-        },
-      });
+    const depositId = String(id || "");
+    if (!depositId) {
+      return { ok: false, message: "Missing deposit." };
+    }
 
-      if (action === "APPROVED") {
-        await adjustWallet(tx, {
-          userId: deposit.userId,
-          type: "DEPOSIT",
-          amount: toNumber(deposit.amount),
-          refType: "deposit",
-          refId: deposit.id,
-          note: "Manual deposit approved",
+    await prisma.$transaction(
+      async (tx) => {
+        const deposit = await tx.deposit.findUnique({
+          where: { id: depositId },
+          select: {
+            id: true,
+            userId: true,
+            amount: true,
+            status: true,
+            provider: true,
+          },
         });
-        await payReferralCommissions(deposit.userId, deposit.amount, tx);
-        await createNotification(
-          {
-            userId: deposit.userId,
-            type: "deposit",
-            title: "We received your deposit",
-            body: `${formatCurrency(deposit.amount)} is now in your wallet.`,
-            href: "/dashboard/wallet",
+        if (!deposit || deposit.status !== "PENDING") {
+          throw new Error("Deposit is not pending.");
+        }
+        if (deposit.provider === "paymongo") {
+          throw new Error(
+            "PayMongo deposits credit automatically when paid. Do not approve unpaid checkouts."
+          );
+        }
+
+        const claimed = await tx.deposit.updateMany({
+          where: { id: deposit.id, status: "PENDING" },
+          data: {
+            status: action,
+            adminNote: adminNote || null,
+            reviewedById: admin.id,
+            reviewedAt: new Date(),
           },
-          tx
-        );
-      } else {
-        await createNotification(
-          {
+        });
+        if (claimed.count !== 1) {
+          throw new Error("Deposit is not pending.");
+        }
+
+        if (action === "APPROVED") {
+          await adjustWallet(tx, {
             userId: deposit.userId,
-            type: "deposit",
-            title: "Deposit rejected",
-            body: adminNote
-              ? `${formatCurrency(deposit.amount)} was rejected. ${adminNote}`
-              : `${formatCurrency(deposit.amount)} deposit was rejected.`,
-            href: "/dashboard/deposit",
-          },
-          tx
-        );
-      }
-    });
+            type: "DEPOSIT",
+            amount: toNumber(deposit.amount),
+            refType: "deposit",
+            refId: deposit.id,
+            note: "Manual deposit approved",
+          });
+          await payReferralCommissions(deposit.userId, deposit.amount, tx);
+          await createNotification(
+            {
+              userId: deposit.userId,
+              type: "deposit",
+              title: "We received your deposit",
+              body: `${formatCurrency(deposit.amount)} is now in your wallet.`,
+              href: "/dashboard/wallet",
+            },
+            tx
+          );
+        } else {
+          await createNotification(
+            {
+              userId: deposit.userId,
+              type: "deposit",
+              title: "Deposit rejected",
+              body: adminNote
+                ? `${formatCurrency(deposit.amount)} was rejected. ${adminNote}`
+                : `${formatCurrency(deposit.amount)} deposit was rejected.`,
+              href: "/dashboard/deposit",
+            },
+            tx
+          );
+        }
+      },
+      { maxWait: 10_000, timeout: 20_000 }
+    );
 
     revalidateWalletPaths();
     return { ok: true, message: `Deposit ${action.toLowerCase()}.` };
   } catch (e) {
+    console.error("reviewDepositAction:", e);
+    const code = e?.code;
+    if (code === "P2028" || code === "P2034") {
+      return { ok: false, message: "Database was busy. Try Approve again." };
+    }
     return { ok: false, message: e.message || "Review failed." };
   }
 }
