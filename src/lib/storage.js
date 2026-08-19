@@ -1,18 +1,27 @@
 import { createClient } from "@supabase/supabase-js";
+import { mkdir, writeFile } from "fs/promises";
+import path from "path";
 
 export const DEPOSIT_PROOF_BUCKET = "deposit-proofs";
 export const AVATAR_BUCKET = "avatars";
 const SIGNED_URL_TTL_SEC = 60 * 60;
 const MAX_PROOF_BYTES = 5 * 1024 * 1024;
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+const MAX_INLINE_BYTES = 2 * 1024 * 1024;
 const ALLOWED_EXT = new Set(["jpg", "jpeg", "png", "webp", "heic", "heif"]);
 
 export function getSupabaseUrl() {
-  return (
+  const explicit =
     process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() ||
     process.env.SUPABASE_URL?.trim() ||
-    ""
-  );
+    "";
+  if (explicit) return explicit;
+
+  const db = process.env.DATABASE_URL || process.env.DIRECT_URL || "";
+  const match =
+    db.match(/postgres\.([a-z0-9]+)\./i) ||
+    db.match(/@db\.([a-z0-9]+)\.supabase/i);
+  return match ? `https://${match[1]}.supabase.co` : "";
 }
 
 export function isSupabaseStorageConfigured() {
@@ -112,23 +121,45 @@ export async function uploadDepositProof(file, userId) {
     throw new Error("Receipt must be 5MB or smaller.");
   }
 
-  const ext = safeExt(file.name);
-  const objectPath = `${userId}/deposit_${Date.now()}_${Math.random()
-    .toString(36)
-    .slice(2)}.${ext}`;
+  if (isSupabaseStorageConfigured()) {
+    const ext = safeExt(file.name);
+    const objectPath = `${userId}/deposit_${Date.now()}_${Math.random()
+      .toString(36)
+      .slice(2)}.${ext}`;
+    const bytes = Buffer.from(await file.arrayBuffer());
+    const supabase = getSupabaseAdmin();
+    await ensureBucket(supabase);
+
+    const { error } = await supabase.storage
+      .from(DEPOSIT_PROOF_BUCKET)
+      .upload(objectPath, bytes, {
+        contentType: contentTypeFor(ext),
+        upsert: false,
+      });
+    if (error) throw error;
+
+    return objectPath;
+  }
+
+  return saveProofLocally(file);
+}
+
+async function saveProofLocally(file) {
   const bytes = Buffer.from(await file.arrayBuffer());
-  const supabase = getSupabaseAdmin();
-  await ensureBucket(supabase);
+  const ext = safeExt(file.name);
+  const filename = `deposit_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
 
-  const { error } = await supabase.storage
-    .from(DEPOSIT_PROOF_BUCKET)
-    .upload(objectPath, bytes, {
-      contentType: contentTypeFor(ext),
-      upsert: false,
-    });
-  if (error) throw error;
-
-  return objectPath;
+  try {
+    const dir = path.join(process.cwd(), "public", "uploads");
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, filename), bytes);
+    return `/uploads/${filename}`;
+  } catch {
+    if (bytes.length > MAX_INLINE_BYTES) {
+      throw new Error("Receipt must be 2MB or smaller until cloud storage is configured.");
+    }
+    return `data:${contentTypeFor(ext)};base64,${bytes.toString("base64")}`;
+  }
 }
 
 export function isLegacyProofPath(stored) {
@@ -136,7 +167,8 @@ export function isLegacyProofPath(stored) {
   return (
     stored.startsWith("/") ||
     stored.startsWith("http://") ||
-    stored.startsWith("https://")
+    stored.startsWith("https://") ||
+    stored.startsWith("data:")
   );
 }
 
