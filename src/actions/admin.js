@@ -77,6 +77,49 @@ export async function toggleDepositMethodAction(id) {
   return { ok: true, data: serialize(method) };
 }
 
+export async function updateDepositMethodAction({ id, ...data }) {
+  await requireAdmin();
+  if (!id) return { ok: false, message: "Method not found." };
+
+  const current = await prisma.depositMethod.findUnique({ where: { id } });
+  if (!current) return { ok: false, message: "Method not found." };
+
+  const method = await prisma.depositMethod.update({
+    where: { id },
+    data: {
+      name: String(data.name || current.name).trim(),
+      type: data.type || current.type,
+      accountName: data.accountName || null,
+      accountNumber: data.accountNumber || null,
+      instructions: data.instructions ?? current.instructions,
+    },
+  });
+
+  revalidateTag("deposit-methods");
+  revalidatePath("/admin/methods");
+  revalidatePath("/dashboard/deposit");
+  return { ok: true, data: serialize(method), message: "Method updated." };
+}
+
+export async function deleteDepositMethodAction(id) {
+  await requireAdmin();
+  const current = await prisma.depositMethod.findUnique({ where: { id } });
+  if (!current) return { ok: false, message: "Method not found." };
+
+  await prisma.$transaction(async (tx) => {
+    await tx.deposit.updateMany({
+      where: { methodId: id },
+      data: { methodId: null },
+    });
+    await tx.depositMethod.delete({ where: { id } });
+  });
+
+  revalidateTag("deposit-methods");
+  revalidatePath("/admin/methods");
+  revalidatePath("/dashboard/deposit");
+  return { ok: true, message: "Method deleted." };
+}
+
 export async function updateSettingsAction(values) {
   await requireAdmin();
 
