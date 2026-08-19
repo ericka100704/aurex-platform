@@ -4,15 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import GlassCard from "@/components/ui/GlassCard";
 import DepositQrModal from "@/components/dashboard/DepositQrModal";
 import {
-  generateGcashAmountQrAction,
   getDepositPaymentStatusAction,
   initiatePaymongoDepositAction,
   submitDepositAction,
 } from "@/actions/deposits";
-
-function methodQrUrl(method) {
-  return method?.qrImageUrl || "";
-}
 
 export default function DepositForm({ methods = [], onlinePayments = false }) {
   const [methodId, setMethodId] = useState(methods[0]?.id || "");
@@ -21,8 +16,7 @@ export default function DepositForm({ methods = [], onlinePayments = false }) {
   const [pending, setPending] = useState(false);
   const [uploadKey, setUploadKey] = useState(0);
   const [session, setSession] = useState(null);
-  const [qrOpen, setQrOpen] = useState(false);
-  const [qrDataUrl, setQrDataUrl] = useState("");
+  const [payOpen, setPayOpen] = useState(false);
 
   const selected = useMemo(
     () => methods.find((m) => m.id === methodId) || methods[0],
@@ -30,7 +24,6 @@ export default function DepositForm({ methods = [], onlinePayments = false }) {
   );
   const pesos = Number(amount);
   const hasAmount = Number.isFinite(pesos) && pesos > 0;
-  const staticQr = methodQrUrl(selected);
   const autoCredit = Boolean(onlinePayments);
   const paid = session?.status === "APPROVED";
   const awaitingReview = session?.status === "PENDING" && !autoCredit;
@@ -45,19 +38,17 @@ export default function DepositForm({ methods = [], onlinePayments = false }) {
       setSession({
         depositId,
         checkoutUrl: "",
-        qrDataUrl: "",
         amount: Number.isFinite(pesos) && pesos > 0 ? pesos : 0,
         methodId,
         status: "PENDING",
       });
-      setQrOpen(true);
+      setPayOpen(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    setQrOpen(false);
-    setQrDataUrl("");
+    setPayOpen(false);
     setSession(null);
   }, [methodId]);
 
@@ -85,7 +76,7 @@ export default function DepositForm({ methods = [], onlinePayments = false }) {
       if (result.status === "CANCELLED" || result.status === "REJECTED") {
         setMessage(result.message);
         setSession(null);
-        setQrOpen(false);
+        setPayOpen(false);
       }
     }
 
@@ -112,7 +103,7 @@ export default function DepositForm({ methods = [], onlinePayments = false }) {
       });
       setAmount("");
       setUploadKey((k) => k + 1);
-      setQrOpen(true);
+      setPayOpen(true);
     }
     return result;
   }
@@ -136,17 +127,13 @@ export default function DepositForm({ methods = [], onlinePayments = false }) {
           setSession({
             depositId: result.depositId,
             checkoutUrl: result.checkoutUrl,
-            qrDataUrl: result.qrDataUrl,
             expiresAt: result.expiresAt,
             amount: pesos,
             methodId,
             methodName: result.methodName,
             status: "PENDING",
           });
-          setQrDataUrl(result.qrDataUrl);
-          setQrOpen(true);
-          setMessage(result.message);
-        } else if (result.useManual) {
+          setPayOpen(true);
           setMessage(result.message);
         } else {
           setMessage(result.message);
@@ -154,28 +141,19 @@ export default function DepositForm({ methods = [], onlinePayments = false }) {
         return;
       }
 
-      const result = await generateGcashAmountQrAction(pesos, methodId);
-      if (result.ok) {
-        setQrDataUrl(result.qrDataUrl);
-      } else {
-        setQrDataUrl("");
-        setMessage(result.message || "Showing your GCash QR. Enter the amount in the app.");
-      }
-      setQrOpen(true);
+      setPayOpen(true);
     } catch {
       if (autoCredit) {
         setMessage("Could not start GCash checkout. Try again.");
       } else {
-        setQrDataUrl("");
-        setQrOpen(true);
-        setMessage("Showing your GCash QR. Enter the amount in the app.");
+        setPayOpen(true);
       }
     } finally {
       setPending(false);
     }
   }
 
-  async function handleQrConfirm(e) {
+  async function handlePayConfirm(e) {
     e.preventDefault();
     const form = e.currentTarget;
     setPending(true);
@@ -206,7 +184,7 @@ export default function DepositForm({ methods = [], onlinePayments = false }) {
       <p className="text-xs text-white/45">
         {autoCredit
           ? "Submit an amount — pay in GCash. Your wallet credits automatically when payment is confirmed."
-          : "Enter an amount, pay, then upload your receipt. Admin approves before your wallet credits."}
+          : "Enter an amount, send to the account number, then upload your receipt. Admin approves before your wallet credits."}
       </p>
 
       <form onSubmit={handleSubmit} className="mt-4 space-y-3">
@@ -247,26 +225,24 @@ export default function DepositForm({ methods = [], onlinePayments = false }) {
         <button type="submit" className="btn-rose w-full" disabled={pending}>
           {pending ? "Opening payment…" : "Submit Deposit"}
         </button>
-        {!qrOpen && message ? <p className="text-center text-xs text-gold">{message}</p> : null}
+        {!payOpen && message ? <p className="text-center text-xs text-gold">{message}</p> : null}
       </form>
 
       <DepositQrModal
-        open={qrOpen}
+        open={payOpen}
         method={selected}
         amount={session?.amount || pesos}
-        qrUrl={session?.qrDataUrl || qrDataUrl || (!autoCredit ? staticQr : "")}
         checkoutUrl={session?.checkoutUrl}
         autoCredit={autoCredit}
         paid={paid}
         awaitingReview={awaitingReview}
-        amountLocked={Boolean(qrDataUrl) || autoCredit}
         uploadKey={uploadKey}
         pending={pending}
         message={message}
         onClose={() => {
-          if (!pending) setQrOpen(false);
+          if (!pending) setPayOpen(false);
         }}
-        onConfirm={handleQrConfirm}
+        onConfirm={handlePayConfirm}
       />
     </GlassCard>
   );

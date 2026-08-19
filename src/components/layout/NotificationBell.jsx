@@ -79,9 +79,19 @@ export default function NotificationBell() {
   }
 
   useEffect(() => {
-    load();
-    const interval = setInterval(load, 20000);
-    return () => clearInterval(interval);
+    function tick() {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+        return;
+      }
+      void load();
+    }
+    tick();
+    const interval = setInterval(tick, 60_000);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", tick);
+    };
   }, []);
 
   useEffect(() => {

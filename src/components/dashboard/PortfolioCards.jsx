@@ -18,7 +18,7 @@ export default function PortfolioCards({ investments = [], compact = false }) {
           <p className="mt-1 text-xs text-white/40">Active & recent investments</p>
         </div>
         <Link
-          href="/dashboard/plans"
+          href="/dashboard/investments"
           className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-white/70 transition hover:border-magenta/40 hover:text-white"
         >
           See all

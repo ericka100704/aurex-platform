@@ -15,8 +15,8 @@ export default function Topbar({
   const firstName = userName.split(" ")[0] || userName;
 
   return (
-    <header className="relative z-40 px-4 pb-2 pt-3 md:px-10 md:pb-3 md:pt-5 lg:px-12">
-      <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-3 rounded-2xl border border-white/[0.06] bg-[#121212]/95 px-3.5 py-3 md:gap-6 md:rounded-[1.75rem] md:px-7 md:py-5">
+    <header className="relative z-40 px-3 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] md:px-10 md:pb-3 md:pt-5 lg:px-12">
+      <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-2 rounded-2xl border border-white/[0.06] bg-[#121212]/95 px-3 py-2.5 md:gap-6 md:rounded-[1.75rem] md:px-7 md:py-5">
         <div className="flex min-w-0 items-center gap-2.5 md:gap-3">
           <button
             type="button"
@@ -30,7 +30,7 @@ export default function Topbar({
             <h1 className="truncate font-display text-xl text-white md:text-3xl">
               {variant === "user" ? `Welcome, ${firstName}` : title}
             </h1>
-            <p className="mt-0.5 truncate text-xs text-white/45 md:mt-1 md:text-sm">
+            <p className="mt-0.5 hidden truncate text-xs text-white/45 sm:block md:mt-1 md:text-sm">
               {subtitle ||
                 (variant === "user"
                   ? "Here's your investment portfolio overview."

@@ -24,12 +24,10 @@ export default function DepositQrModal({
   open,
   method,
   amount,
-  qrUrl,
   checkoutUrl,
   autoCredit = false,
   paid = false,
   awaitingReview = false,
-  amountLocked = false,
   uploadKey,
   pending,
   message,
@@ -72,10 +70,10 @@ export default function DepositQrModal({
   if (!mounted || !open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[80] flex items-end justify-center p-3 sm:items-center sm:p-6">
+    <div className="fixed inset-0 z-[80] flex items-end justify-center p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:items-center sm:p-6">
       <button
         type="button"
-        className="absolute inset-0 bg-black/75 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/80"
         aria-label="Close"
         disabled={pending}
         onClick={onClose}
@@ -84,7 +82,7 @@ export default function DepositQrModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="deposit-qr-title"
-        className="relative z-10 max-h-[92vh] w-full max-w-md overflow-y-auto rounded-[1.75rem] border border-white/10 bg-[#121212] p-5 shadow-[0_0_60px_rgba(255,105,180,0.18)] sm:p-6"
+        className="relative z-10 max-h-[min(92dvh,92vh)] w-full max-w-md overflow-y-auto rounded-[1.75rem] border border-white/10 bg-[#121212] p-5 shadow-[0_0_60px_rgba(255,105,180,0.18)] sm:p-6"
       >
         <div className="flex items-start justify-between gap-3">
           {paid || awaitingReview ? (
@@ -99,7 +97,7 @@ export default function DepositQrModal({
               </h3>
               <p className="mt-1 text-xs text-white/45">
                 {autoCredit
-                  ? "Scan or open checkout. The amount is locked — your wallet credits itself when paid."
+                  ? "Open checkout and pay the locked amount. Your wallet credits itself when paid."
                   : "Send the exact amount to the account below, then upload your receipt."}
               </p>
             </div>
@@ -149,23 +147,11 @@ export default function DepositQrModal({
           </div>
         ) : (
           <>
-            {qrUrl ? (
-              <img
-                src={qrUrl}
-                alt={`${method?.name || "GCash"} QR`}
-                className={`mx-auto mt-4 w-full max-w-[260px] rounded-2xl ${
-                  autoCredit || amountLocked ? "bg-white p-2" : "bg-[#0070e0] p-1"
-                }`}
-              />
-            ) : (
-              <div className="mt-6 flex flex-col items-center gap-2 py-8 text-white/45">
-                <Loader2 className="h-8 w-8 animate-spin text-gold" />
-                <p className="text-sm">Preparing payment…</p>
-              </div>
-            )}
-
             {autoCredit ? (
               <>
+                <p className="mt-6 text-sm text-white/55">
+                  Open checkout and pay the exact amount. Your wallet credits when payment is confirmed.
+                </p>
                 <p className="mt-3 flex items-center justify-center gap-2 text-xs text-gold">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   Waiting for payment — no receipt needed

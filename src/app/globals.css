@@ -20,6 +20,8 @@ html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 body {
@@ -29,7 +31,14 @@ body {
     radial-gradient(ellipse 80% 50% at 20% -10%, rgba(212, 175, 55, 0.14), transparent),
     radial-gradient(ellipse 55% 40% at 92% 8%, rgba(255, 77, 166, 0.12), transparent),
     radial-gradient(ellipse 50% 30% at 50% 100%, rgba(184, 148, 31, 0.05), transparent);
-  min-height: 100vh;
+  min-height: 100dvh;
+  max-width: 100%;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+  -webkit-tap-highlight-color: transparent;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 @layer components {
@@ -44,19 +53,10 @@ body {
     box-shadow:
       0 8px 28px rgba(0, 0, 0, 0.28),
       inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    transform: translateZ(0);
-    backface-visibility: hidden;
   }
 
   .glass-card-hover {
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  }
-
-  .glass-card-hover:hover {
-    border-color: rgba(255, 105, 180, 0.22);
-    box-shadow:
-      0 10px 30px rgba(0, 0, 0, 0.32),
-      inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
 
   .glass-card-glow {
@@ -106,52 +106,31 @@ body {
 
   .btn-gold {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5
-      font-medium text-dark-500 transition-all duration-300;
+      font-medium text-dark-500;
     background: linear-gradient(135deg, #d4af37 0%, #f5ebc3 45%, #b8941f 100%);
-  }
-
-  .btn-gold:hover {
-    @apply shadow-gold brightness-105;
   }
 
   .btn-rose {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5
-      font-medium text-white transition-all duration-300;
+      font-medium text-white;
     background: linear-gradient(135deg, #ff69b4 0%, #ff2e96 45%, #8a2be2 100%);
     box-shadow: 0 0 24px rgba(255, 105, 180, 0.4);
   }
 
-  .btn-rose:hover {
-    @apply shadow-glow brightness-105;
-  }
-
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 rounded-full border
-      px-5 py-2.5 font-medium transition-all duration-300;
+      px-5 py-2.5 font-medium;
     border-color: rgba(255, 255, 255, 0.12);
     background: rgba(255, 255, 255, 0.04);
     color: rgba(255, 255, 255, 0.7);
   }
 
-  .btn-ghost:hover {
-    border-color: rgba(255, 105, 180, 0.4);
-    background: rgba(255, 105, 180, 0.1);
-    color: #ffffff;
-  }
-
   .btn-pink-outline {
     @apply inline-flex items-center justify-center gap-2 rounded-xl border-2
-      bg-white/5 px-5 py-2.5 font-medium transition-all duration-300;
+      bg-white/5 px-5 py-2.5 font-medium;
     border-color: #ff4da6;
     color: #d4af37;
     box-shadow: 0 0 14px rgba(255, 77, 166, 0.28);
-  }
-
-  .btn-pink-outline:hover {
-    border-color: #ff80c3;
-    background: rgba(255, 77, 166, 0.12);
-    color: #f5ebc3;
-    box-shadow: 0 0 20px rgba(255, 77, 166, 0.45);
   }
 
   .input-luxury {
@@ -249,6 +228,62 @@ select,
 textarea,
 label {
   touch-action: manipulation;
+}
+
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .glass-card-hover:hover {
+    border-color: rgba(255, 105, 180, 0.22);
+    box-shadow:
+      0 10px 30px rgba(0, 0, 0, 0.32),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .btn-gold:hover {
+    filter: brightness(1.05);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.25);
+  }
+
+  .btn-rose:hover {
+    filter: brightness(1.05);
+  }
+
+  .btn-ghost:hover {
+    border-color: rgba(255, 105, 180, 0.4);
+    background: rgba(255, 105, 180, 0.1);
+    color: #ffffff;
+  }
+
+  .btn-pink-outline:hover {
+    border-color: #ff80c3;
+    background: rgba(255, 77, 166, 0.12);
+    color: #f5ebc3;
+    box-shadow: 0 0 20px rgba(255, 77, 166, 0.45);
+  }
+}
+
+@media (max-width: 767px) {
+  .glass-card-glow::after {
+    display: none;
+  }
+
+  .shimmer-text {
+    animation: none;
+  }
+
+  .aurex-title {
+    filter: none;
+  }
+
+  .backdrop-blur-md,
+  .backdrop-blur-sm {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

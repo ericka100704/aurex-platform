@@ -34,7 +34,7 @@ export default async function UserDashboardPage() {
     <div className="space-y-8 md:space-y-10">
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4 xl:gap-6">
         <StatCard
-          href="/dashboard/wallet"
+          href="/dashboard/wallet/available"
           label="Available Balance"
           value={formatCurrency(user.balance)}
           subtext="Ready to invest or withdraw"
@@ -42,7 +42,7 @@ export default async function UserDashboardPage() {
           accent="gold"
         />
         <StatCard
-          href="/dashboard/plans"
+          href="/dashboard/investments"
           label="Active Investments"
           value={String(active.length)}
           subtext={formatCurrency(locked) + " locked"}
@@ -51,7 +51,7 @@ export default async function UserDashboardPage() {
           delay={0.05}
         />
         <StatCard
-          href="/dashboard/wallet"
+          href="/dashboard/wallet/equity"
           label="Total ROI Earned"
           value={formatCurrency(totalEarned)}
           subtext="Lifetime earnings"

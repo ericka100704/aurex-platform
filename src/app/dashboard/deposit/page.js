@@ -20,8 +20,8 @@ export default async function DepositPage() {
           {onlinePayments ? (
             <>
               <li>1. Select a method and enter the amount.</li>
-              <li>2. Click Submit Deposit — a PayMongo GCash checkout QR appears.</li>
-              <li>3. Scan or open checkout and pay the locked amount.</li>
+              <li>2. Click Submit Deposit — PayMongo checkout opens.</li>
+              <li>3. Pay the locked amount in GCash.</li>
               <li>4. When PayMongo confirms payment, your wallet credits itself. No receipt.</li>
               <li>5. Admin approval is only required when you withdraw.</li>
             </>
@@ -48,8 +48,8 @@ export default async function DepositPage() {
               </p>
               <p className="mt-1 text-[11px] text-white/35">
                 {onlinePayments
-                  ? "PayMongo QR after Submit — auto-credits when paid."
-                  : "QR popup after Submit. Admin approves the receipt before credit."}
+                  ? "Open checkout after Submit — auto-credits when paid."
+                  : "Account number appears after Submit. Admin approves the receipt before credit."}
               </p>
             </li>
           ))}

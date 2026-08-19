@@ -51,7 +51,7 @@ export default function StatCard({
     >
       <div
         className={cn(
-          "absolute -right-8 -top-8 h-28 w-28 rounded-full opacity-30 blur-3xl",
+          "pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full opacity-25 md:h-28 md:w-28 md:opacity-30 md:blur-3xl",
           accent === "rose" ? "bg-magenta" : "bg-gold"
         )}
       />

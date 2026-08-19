@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
 import {
   ShieldCheck,
   Wallet,
@@ -85,7 +84,7 @@ export default function HomeLanding({ plans = [], rewards }) {
   const maxLevel = rewards?.maxLevel ?? 4;
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-dark">
+    <div className="relative min-h-dvh overflow-x-hidden bg-dark">
       <div className="pointer-events-none absolute inset-0">
         <Image
           src="/aurex-bg.png"
@@ -96,7 +95,7 @@ export default function HomeLanding({ plans = [], rewards }) {
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-dark/50" />
-        <div className="absolute inset-x-0 top-[40%] h-72 bg-gradient-to-t from-gold/10 via-rose/5 to-transparent blur-2xl" />
+        <div className="absolute inset-x-0 top-[40%] hidden h-72 bg-gradient-to-t from-gold/10 via-rose/5 to-transparent md:block md:blur-2xl" />
       </div>
 
       <div className="relative z-10 mx-auto flex max-w-6xl flex-col px-5 pb-16 pt-5 md:px-8">
@@ -122,7 +121,7 @@ export default function HomeLanding({ plans = [], rewards }) {
             </Link>
             <Link
               href="/register"
-              className="rounded-full bg-gold-gradient px-4 py-2 text-sm font-semibold text-dark shadow-gold transition hover:scale-[1.02]"
+              className="rounded-full bg-gold-gradient px-4 py-2 text-sm font-semibold text-dark shadow-gold"
             >
               Start Now
             </Link>
@@ -130,52 +129,33 @@ export default function HomeLanding({ plans = [], rewards }) {
         </header>
 
         <section className="flex flex-col items-center px-2 pb-10 pt-16 text-center md:pt-20">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 inline-flex items-center rounded-full border border-gold/30 bg-black/40 px-4 py-1.5 text-xs text-gold/90 backdrop-blur-md"
-          >
+          <div className="mb-6 inline-flex items-center rounded-full border border-gold/30 bg-black/40 px-4 py-1.5 text-xs text-gold/90">
             Trade · Grow · Succeed
-          </motion.div>
+          </div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.08 }}
-            className="aurex-title font-brand text-6xl md:text-8xl"
-          >
+          <h1 className="aurex-title font-brand text-5xl sm:text-6xl md:text-8xl">
             AUREX
-          </motion.h1>
+          </h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.16 }}
-            className="mt-5 max-w-xl text-sm text-white/60 md:text-base"
-          >
+          <p className="mt-5 max-w-xl text-sm text-white/60 md:text-base">
             Your partner in global markets — GCash & GoTyme deposits, live plans,
             referral rewards, and admin-controlled rules.
-          </motion.p>
+          </p>
 
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.24 }}
-            className="mt-8 flex flex-wrap items-center justify-center gap-3"
-          >
+          <div className="mt-8 flex w-full max-w-md flex-col items-stretch justify-center gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center">
             <Link
               href="/register"
-              className="rounded-full bg-gold-gradient px-7 py-3 text-sm font-semibold text-dark shadow-[0_8px_28px_rgba(212,175,55,0.45)] transition hover:scale-[1.03] md:text-base"
+              className="rounded-full bg-gold-gradient px-7 py-3 text-center text-sm font-semibold text-dark shadow-[0_8px_28px_rgba(212,175,55,0.45)] md:text-base"
             >
               Join AUREX Today
             </Link>
             <Link
               href="/login"
-              className="rounded-full border-2 border-rose bg-black/30 px-7 py-3 text-sm font-medium text-gold shadow-[0_0_16px_rgba(255,77,166,0.3)] transition hover:bg-rose/10 md:text-base"
+              className="rounded-full border-2 border-rose bg-black/30 px-7 py-3 text-center text-sm font-medium text-gold md:text-base"
             >
               Sign in
             </Link>
-          </motion.div>
+          </div>
         </section>
 
         <section id="plans" className="scroll-mt-28 py-14">
@@ -195,14 +175,10 @@ export default function HomeLanding({ plans = [], rewards }) {
             </p>
           ) : (
             <div className="grid gap-4 md:grid-cols-3">
-              {plans.map((plan, i) => (
-                <motion.div
+              {plans.map((plan) => (
+                <div
                   key={plan.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.08 }}
-                  className="rounded-2xl border border-gold/30 bg-black/45 p-5 backdrop-blur-md"
+                  className="rounded-2xl border border-gold/30 bg-black/45 p-5"
                   style={{
                     boxShadow: "inset 0 0 0 1px rgba(255,77,166,0.12)",
                   }}
@@ -235,7 +211,7 @@ export default function HomeLanding({ plans = [], rewards }) {
                   >
                     Get Started
                   </Link>
-                </motion.div>
+                </div>
               ))}
             </div>
           )}
@@ -249,19 +225,15 @@ export default function HomeLanding({ plans = [], rewards }) {
             </h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            {STEPS.map((item, i) => (
-              <motion.div
+            {STEPS.map((item) => (
+              <div
                 key={item.step}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.06 }}
                 className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-left"
               >
                 <p className="font-brand text-sm tracking-[0.2em] text-rose">{item.step}</p>
                 <h3 className="mt-2 font-display text-xl text-white">{item.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-white/55">{item.text}</p>
-              </motion.div>
+              </div>
             ))}
           </div>
         </section>
@@ -274,15 +246,11 @@ export default function HomeLanding({ plans = [], rewards }) {
             </h2>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map((feature, i) => {
+            {FEATURES.map((feature) => {
               const Icon = feature.icon;
               return (
-                <motion.div
+                <div
                   key={feature.title}
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.05 }}
                   className="rounded-2xl border border-gold/20 bg-black/40 p-5 text-left"
                 >
                   <div className="mb-3 inline-flex rounded-full border border-rose/35 bg-rose/10 p-2.5 text-rose">
@@ -290,7 +258,7 @@ export default function HomeLanding({ plans = [], rewards }) {
                   </div>
                   <h3 className="font-display text-lg text-white">{feature.title}</h3>
                   <p className="mt-2 text-sm text-white/55">{feature.text}</p>
-                </motion.div>
+                </div>
               );
             })}
           </div>

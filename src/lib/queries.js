@@ -124,6 +124,24 @@ export async function getRecentDeposits(limit = 40) {
   return mapDepositRows(rows);
 }
 
+export async function getUserDeposits(userId) {
+  const rows = await prisma.deposit.findMany({
+    where: { userId },
+    include: { method: { select: { name: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+  return serialize(
+    rows.map((d) => ({
+      id: d.id,
+      amount: toNumber(d.amount),
+      method: d.method?.name || "Deposit",
+      status: d.status,
+      createdAt: d.createdAt,
+      reviewedAt: d.reviewedAt,
+    }))
+  );
+}
+
 export async function getPendingWithdrawals() {
   const rows = await prisma.withdrawal.findMany({
     where: { status: "PENDING" },

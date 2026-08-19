@@ -29,7 +29,7 @@ export default function Sidebar({
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-[260px] border-r border-white/[0.06] bg-[#0d0d0d] transition-transform duration-200 ease-out",
+          "fixed inset-y-0 left-0 z-50 flex h-dvh w-[260px] flex-col border-r border-white/[0.06] bg-[#0d0d0d] pt-[env(safe-area-inset-top)] transition-transform duration-200 ease-out",
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
