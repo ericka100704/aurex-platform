@@ -10,10 +10,8 @@ import {
   submitDepositAction,
 } from "@/actions/deposits";
 
-const DEFAULT_QR = "/qr/gcash.png";
-
 function methodQrUrl(method) {
-  return method?.qrImageUrl || DEFAULT_QR;
+  return method?.qrImageUrl || "";
 }
 
 export default function DepositForm({ methods = [], onlinePayments = false }) {
@@ -156,7 +154,7 @@ export default function DepositForm({ methods = [], onlinePayments = false }) {
         return;
       }
 
-      const result = await generateGcashAmountQrAction(pesos);
+      const result = await generateGcashAmountQrAction(pesos, methodId);
       if (result.ok) {
         setQrDataUrl(result.qrDataUrl);
       } else {

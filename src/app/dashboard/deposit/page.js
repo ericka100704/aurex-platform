@@ -28,8 +28,8 @@ export default async function DepositPage() {
           ) : (
             <>
               <li>1. Select a method and enter the amount.</li>
-              <li>2. Click Submit Deposit — a GCash QR popup appears.</li>
-              <li>3. Pay in GCash, then upload your receipt.</li>
+              <li>2. Click Submit Deposit — account details appear.</li>
+              <li>3. Send to GCash 09242512818 or GoTyme 012774193734 (MABEL HULAR), then upload your receipt.</li>
               <li>4. Status stays pending until an admin verifies the screenshot.</li>
               <li>5. After approval, your wallet credits and you can invest or withdraw.</li>
             </>

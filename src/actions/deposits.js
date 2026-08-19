@@ -16,7 +16,6 @@ import {
   retrieveCheckoutSession,
 } from "@/lib/paymongo";
 import { serialize, toNumber } from "@/lib/serialize";
-import { emvWithAmount, GCASH_P2P_PAYLOAD } from "@/lib/qrph";
 import { createNotification, formatCurrency, notifyAdmins } from "@/lib/notifications";
 import { uploadDepositProof } from "@/lib/storage";
 import { adjustWallet } from "@/lib/ledger";
@@ -372,15 +371,32 @@ export async function getDepositPaymentStatusAction(depositId) {
   };
 }
 
-export async function generateGcashAmountQrAction(amount) {
+export async function generateGcashAmountQrAction(amount, methodId) {
   await requireUser();
   const pesos = Number(amount);
   if (!Number.isFinite(pesos) || pesos <= 0) {
     return { ok: false, message: "Enter a valid deposit amount." };
   }
 
+  const method = methodId
+    ? await prisma.depositMethod.findFirst({
+        where: { id: String(methodId), isActive: true },
+      })
+    : await prisma.depositMethod.findFirst({
+        where: { type: "GCASH", isActive: true },
+        orderBy: { sortOrder: "asc" },
+      });
+
+  const payload = [
+    method?.name || "AUREX",
+    method?.accountName || "MABEL HULAR",
+    method?.accountNumber || "",
+    `PHP ${pesos.toFixed(2)}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
   try {
-    const payload = emvWithAmount(GCASH_P2P_PAYLOAD, pesos);
     const qrDataUrl = await QRCode.toDataURL(payload, {
       width: 320,
       margin: 1,
@@ -391,7 +407,7 @@ export async function generateGcashAmountQrAction(amount) {
   } catch (error) {
     return {
       ok: false,
-      message: error.message || "Could not generate the GCash QR.",
+      message: error.message || "Could not generate the payment QR.",
     };
   }
 }
