@@ -18,6 +18,8 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -154,8 +156,9 @@ body {
 
   .input-luxury {
     @apply w-full rounded-2xl border bg-black/40 px-4 py-2.5
-      text-sm text-white outline-none transition;
+      text-base text-white outline-none transition;
     border-color: rgba(255, 255, 255, 0.1);
+    font-size: 16px;
   }
 
   .input-luxury::placeholder {
@@ -229,6 +232,23 @@ html {
   width: 0;
   height: 0;
   display: none;
+}
+
+/* iOS Safari zooms the page when a focused field is under 16px. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="range"]):not([type="file"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+select,
+textarea {
+  font-size: 16px !important;
+}
+
+a,
+button,
+[role="button"],
+input,
+select,
+textarea,
+label {
+  touch-action: manipulation;
 }
 
 @media (prefers-reduced-motion: reduce) {
