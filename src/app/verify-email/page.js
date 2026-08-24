@@ -5,7 +5,10 @@ import { verifyEmailByToken } from "@/lib/emailAuth";
 export const dynamic = "force-dynamic";
 
 export default async function VerifyEmailPage({ searchParams }) {
-  const result = await verifyEmailByToken(searchParams?.token || "");
+  const token = Array.isArray(searchParams?.token)
+    ? searchParams.token[0]
+    : searchParams?.token || "";
+  const result = await verifyEmailByToken(token);
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-10">

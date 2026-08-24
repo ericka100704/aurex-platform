@@ -31,6 +31,19 @@ export function formatDateTime(date) {
   }).format(new Date(date));
 }
 
+/** Format "HH:mm" / "H:mm" as 12-hour clock, e.g. "06:00" → "6:00 AM". */
+export function formatClockTime(hhmm) {
+  const raw = String(hhmm || "").trim();
+  const match = raw.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return raw || "—";
+  let hour = Number(match[1]);
+  const minute = match[2];
+  if (!Number.isFinite(hour) || hour < 0 || hour > 23) return raw;
+  const period = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12 || 12;
+  return `${hour}:${minute} ${period}`;
+}
+
 export function cn(...classes) {
   return classes.filter(Boolean).join(" ");
 }

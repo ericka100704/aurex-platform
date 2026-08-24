@@ -24,7 +24,6 @@ export default function Logo({ href = "/", size = "md", showText = true }) {
         width={px}
         height={px}
         className="rounded-full object-cover shadow-gold"
-        priority
       />
       {showText ? (
         <span className={`font-display tracking-[0.18em] ${textSizes[size]}`}>

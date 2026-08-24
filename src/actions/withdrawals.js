@@ -8,14 +8,18 @@ import { getSettingsMap, settingNumber } from "@/lib/settings";
 import { serialize, toNumber } from "@/lib/serialize";
 import { createNotification, formatCurrency, notifyAdmins } from "@/lib/notifications";
 import { adjustWallet } from "@/lib/ledger";
-import { formatPayoutDestination, normalizePhMobile } from "@/lib/utils";
+import { formatPayoutDestination, formatClockTime } from "@/lib/utils";
+
+function normalizePayoutAccount(raw) {
+  return String(raw || "").replace(/\D/g, "").trim();
+}
 
 export async function requestWithdrawalAction(formData) {
   const user = await requireUser();
   const amount = Number(formData.get("amount"));
   const methodType = String(formData.get("methodType") || "").trim();
   const accountName = String(formData.get("accountName") || "").trim();
-  const accountNumber = normalizePhMobile(
+  const accountNumber = normalizePayoutAccount(
     formData.get("accountNumber") || formData.get("accountDetails")
   );
 
@@ -29,7 +33,7 @@ export async function requestWithdrawalAction(formData) {
     return { ok: false, message: "Enter the account name on the wallet." };
   }
   if (!accountNumber) {
-    return { ok: false, message: "Enter a valid 11-digit mobile number (09XXXXXXXXX)." };
+    return { ok: false, message: "Enter the account or mobile number for payout." };
   }
 
   const accountDetails = formatPayoutDestination({ accountName, accountNumber });
@@ -97,7 +101,7 @@ export async function requestWithdrawalAction(formData) {
     return {
       ok: true,
       data: serialize(withdrawal),
-      message: `Withdrawal queued. Batch release processes at ${settings.withdrawal_release_time}.`,
+      message: `Withdrawal queued. Batch release processes at ${formatClockTime(settings.withdrawal_release_time)}.`,
     };
   } catch (e) {
     return { ok: false, message: e.message || "Withdrawal failed." };

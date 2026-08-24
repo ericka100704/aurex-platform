@@ -49,6 +49,7 @@ export async function createDepositMethodAction(data) {
       type: data.type || "CUSTOM",
       accountName: data.accountName || null,
       accountNumber: data.accountNumber || null,
+      qrImageUrl: data.qrImageUrl || null,
       instructions: data.instructions || null,
       isActive: true,
       sortOrder: Number(data.sortOrder || 0),
@@ -91,6 +92,8 @@ export async function updateDepositMethodAction({ id, ...data }) {
       type: data.type || current.type,
       accountName: data.accountName || null,
       accountNumber: data.accountNumber || null,
+      qrImageUrl:
+        data.qrImageUrl !== undefined ? data.qrImageUrl || null : current.qrImageUrl,
       instructions: data.instructions ?? current.instructions,
     },
   });

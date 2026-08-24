@@ -13,7 +13,7 @@ export async function getNotificationsAction() {
       prisma.notification.findMany({
         where: { userId: user.id },
         orderBy: { createdAt: "desc" },
-        take: 40,
+        take: 20,
       }),
       prisma.notification.count({
         where: { userId: user.id, readAt: null },
@@ -22,6 +22,19 @@ export async function getNotificationsAction() {
     return { ok: true, items: serialize(items), unread };
   } catch {
     return { ok: true, items: [], unread: 0 };
+  }
+}
+
+export async function getUnreadCountAction() {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, unread: 0 };
+  try {
+    const unread = await prisma.notification.count({
+      where: { userId: user.id, readAt: null },
+    });
+    return { ok: true, unread };
+  } catch {
+    return { ok: true, unread: 0 };
   }
 }
 

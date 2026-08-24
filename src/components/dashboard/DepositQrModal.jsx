@@ -20,6 +20,13 @@ function openGcashApp() {
   window.open("https://www.gcash.com", "_blank", "noopener,noreferrer");
 }
 
+function depositQrSrc(method) {
+  if (method?.qrImageUrl) return method.qrImageUrl;
+  if (method?.type === "GCASH") return "/qr/gcash.png";
+  if (method?.type === "GOTYME") return "/qr/gotyme.png";
+  return null;
+}
+
 export default function DepositQrModal({
   open,
   method,
@@ -69,6 +76,8 @@ export default function DepositQrModal({
 
   if (!mounted || !open) return null;
 
+  const qrSrc = depositQrSrc(method);
+
   return createPortal(
     <div className="fixed inset-0 z-[80] flex items-end justify-center p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:items-center sm:p-6">
       <button
@@ -98,7 +107,7 @@ export default function DepositQrModal({
               <p className="mt-1 text-xs text-white/45">
                 {autoCredit
                   ? "Open checkout and pay the locked amount. Your wallet credits itself when paid."
-                  : "Send the exact amount to the account below, then upload your receipt."}
+                  : "Scan the QR or send the exact amount to the account below, then upload your receipt."}
               </p>
             </div>
           )}
@@ -177,6 +186,19 @@ export default function DepositQrModal({
               </>
             ) : (
               <>
+                {qrSrc ? (
+                  <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-white p-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={qrSrc}
+                      alt={`${method?.name || "Payment"} QR code`}
+                      className="mx-auto h-auto w-full max-w-[280px] object-contain"
+                    />
+                    <p className="mt-2 text-center text-[11px] text-black/45">
+                      Scan with {method?.name || "your wallet"} · send exact amount
+                    </p>
+                  </div>
+                ) : null}
                 <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 px-3.5 py-3">
                   <p className="text-[11px] text-white/40">Send to</p>
                   <p className="text-sm text-white">{method?.accountName || "AUREX"}</p>

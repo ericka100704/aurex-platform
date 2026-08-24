@@ -28,8 +28,8 @@ export default async function DepositPage() {
           ) : (
             <>
               <li>1. Select a method and enter the amount.</li>
-              <li>2. Click Submit Deposit — account details appear.</li>
-              <li>3. Send to GCash 09242512818 or GoTyme 012774193734 (MABEL HULAR), then upload your receipt.</li>
+              <li>2. Click Submit Deposit — QR and account details appear.</li>
+              <li>3. Scan the GCash/GoTyme QR (MABEL HULAR) or send to 09242512818 / 012774193734, then upload your receipt.</li>
               <li>4. Status stays pending until an admin verifies the screenshot.</li>
               <li>5. After approval, your wallet credits and you can invest or withdraw.</li>
             </>
@@ -49,7 +49,7 @@ export default async function DepositPage() {
               <p className="mt-1 text-[11px] text-white/35">
                 {onlinePayments
                   ? "Open checkout after Submit — auto-credits when paid."
-                  : "Account number appears after Submit. Admin approves the receipt before credit."}
+                  : "Scan the QR or use the account number. Admin approves the receipt before credit."}
               </p>
             </li>
           ))}

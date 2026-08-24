@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import GlassCard from "@/components/ui/GlassCard";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatClockTime } from "@/lib/utils";
 import { requestWithdrawalAction } from "@/actions/withdrawals";
 
 export default function WithdrawForm({
@@ -18,6 +18,7 @@ export default function WithdrawForm({
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
   const [method, setMethod] = useState(methods[0] || "GCash");
+  const [amount, setAmount] = useState("");
 
   const numberLabel = useMemo(() => {
     const key = String(method || "").toLowerCase();
@@ -27,8 +28,29 @@ export default function WithdrawForm({
     return "Wallet / mobile number";
   }, [method]);
 
+  const pesos = Number(amount);
+  const hasAmount = amount !== "" && Number.isFinite(pesos);
+  const belowMin = hasAmount && pesos > 0 && pesos < Number(minWithdrawal);
+  const overBalance = hasAmount && pesos > Number(balance);
+  const amountInvalid = belowMin || overBalance;
+  const amountHint = belowMin
+    ? `Minimum withdrawal is ${formatCurrency(minWithdrawal)}.`
+    : overBalance
+      ? `Amount exceeds available balance (${formatCurrency(balance)}).`
+      : null;
+
   async function handleSubmit(e) {
     e.preventDefault();
+    if (amountInvalid || !hasAmount || pesos <= 0) {
+      setMessage(
+        amountHint ||
+          (hasAmount && pesos <= 0
+            ? "Enter a valid amount."
+            : `Minimum withdrawal is ${formatCurrency(minWithdrawal)}.`)
+      );
+      return;
+    }
+
     const form = e.currentTarget;
     setPending(true);
     setMessage("");
@@ -36,7 +58,10 @@ export default function WithdrawForm({
       const formData = new FormData(form);
       const result = await requestWithdrawalAction(formData);
       setMessage(result.message);
-      if (result.ok) form.reset();
+      if (result.ok) {
+        form.reset();
+        setAmount("");
+      }
     } catch {
       setMessage("Something went wrong. Please try again.");
     } finally {
@@ -51,13 +76,34 @@ export default function WithdrawForm({
         Available: {formatCurrency(balance)} · Min {formatCurrency(minWithdrawal)}
       </p>
       <p className="mt-1 text-[11px] text-gold/80">
-        Requests: {windowStart}–{windowEnd} (Asia/Manila) · Release batch: {releaseTime}
+        Requests: {formatClockTime(windowStart)}–{formatClockTime(windowEnd)}{" "}
+        (Asia/Manila) · Release batch: {formatClockTime(releaseTime)}
       </p>
 
       <form onSubmit={handleSubmit} className="mt-4 space-y-3">
         <div>
           <label className="mb-1 block text-xs text-white/50">Amount</label>
-          <input type="number" min="1" step="0.01" required name="amount" className="input-luxury" />
+          <input
+            type="number"
+            min="1"
+            step="0.01"
+            required
+            name="amount"
+            value={amount}
+            onChange={(e) => {
+              setAmount(e.target.value);
+              setMessage("");
+            }}
+            aria-invalid={amountInvalid}
+            className={`input-luxury ${
+              amountInvalid
+                ? "!border-rose-400/70 !ring-2 !ring-rose-400/35 focus:!border-rose-400"
+                : ""
+            }`}
+          />
+          {amountHint ? (
+            <p className="mt-1.5 text-xs text-rose-300">{amountHint}</p>
+          ) : null}
         </div>
         <div>
           <label className="mb-1 block text-xs text-white/50">Send to</label>
@@ -92,17 +138,23 @@ export default function WithdrawForm({
             type="tel"
             inputMode="numeric"
             defaultValue={defaultPhone}
-            placeholder="09XXXXXXXXX"
+            placeholder="Account or mobile number"
             required
           />
           <p className="mt-1 text-[11px] text-white/40">
-            Payout is sent to this number. Use the 11-digit mobile on your {method} account.
+            Payout is sent to this number. Enter the {method} account or mobile number as shown in the app.
           </p>
         </div>
-        <button type="submit" className="btn-gold w-full" disabled={pending}>
+        <button
+          type="submit"
+          className="btn-gold w-full"
+          disabled={pending || amountInvalid}
+        >
           {pending ? "Submitting..." : "Request Withdrawal"}
         </button>
-        {message ? <p className="text-center text-xs text-gold">{message}</p> : null}
+        {message && !amountHint ? (
+          <p className="text-center text-xs text-gold">{message}</p>
+        ) : null}
       </form>
     </GlassCard>
   );

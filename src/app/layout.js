@@ -3,20 +3,23 @@ import "./globals.css";
 
 const display = Cormorant_Garamond({
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["600", "700"],
   variable: "--font-display",
+  display: "swap",
 });
 
 const brand = Cinzel({
   subsets: ["latin"],
-  weight: ["600", "700", "800", "900"],
+  weight: ["700"],
   variable: "--font-brand",
+  display: "swap",
 });
 
 const sans = Manrope({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "600"],
   variable: "--font-sans",
+  display: "swap",
 });
 
 export const metadata = {

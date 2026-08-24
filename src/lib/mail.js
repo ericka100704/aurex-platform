@@ -28,7 +28,20 @@ async function sendEmail({ to, subject, text, html }) {
   if (!res.ok) {
     const body = await res.text();
     console.error("Resend failed:", res.status, body);
-    return { ok: false };
+    let message = "Could not send email. Try again later.";
+    try {
+      const parsed = JSON.parse(body);
+      const raw = String(parsed?.message || parsed?.error || "");
+      if (/own email|testing emails|only send/i.test(raw)) {
+        message =
+          "Test sender can only email the Resend account address until aurex.click is verified.";
+      } else if (raw) {
+        message = raw;
+      }
+    } catch {
+      /* keep default */
+    }
+    return { ok: false, message };
   }
   return { ok: true };
 }

@@ -14,6 +14,7 @@ const EMPTY_FORM = {
   type: "GCASH",
   accountName: "",
   accountNumber: "",
+  qrImageUrl: "",
 };
 
 export default function DepositMethodsEditor({ initialMethods = [] }) {
@@ -56,6 +57,7 @@ export default function DepositMethodsEditor({ initialMethods = [] }) {
       type: method.type || "GCASH",
       accountName: method.accountName || "",
       accountNumber: method.accountNumber || "",
+      qrImageUrl: method.qrImageUrl || "",
     });
     setMessage("");
   }
@@ -129,6 +131,12 @@ export default function DepositMethodsEditor({ initialMethods = [] }) {
             onChange={(e) =>
               setForm((p) => ({ ...p, accountNumber: e.target.value }))
             }
+          />
+          <input
+            className="input-luxury"
+            placeholder="QR image URL (optional) e.g. /qr/gcash.png"
+            value={form.qrImageUrl}
+            onChange={(e) => setForm((p) => ({ ...p, qrImageUrl: e.target.value }))}
           />
           <button type="submit" className="btn-gold w-full">
             {editingId ? "Save Changes" : "Add Method"}

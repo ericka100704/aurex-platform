@@ -49,12 +49,6 @@ export default function StatCard({
       delay={delay}
       className="relative h-full overflow-hidden !rounded-[1.75rem]"
     >
-      <div
-        className={cn(
-          "pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full opacity-25 md:h-28 md:w-28 md:opacity-30 md:blur-3xl",
-          accent === "rose" ? "bg-magenta" : "bg-gold"
-        )}
-      />
       <div className="relative flex items-start justify-between gap-4">
         <div className="min-w-0 pr-2">
           <p className="text-xs uppercase tracking-[0.18em] text-white/40">{label}</p>

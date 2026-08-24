@@ -3,6 +3,7 @@
 import { useState } from "react";
 import GlassCard from "@/components/ui/GlassCard";
 import { runRoiCreditAction, updateSettingsAction } from "@/actions/admin";
+import { formatClockTime } from "@/lib/utils";
 
 export default function SettingsForm({ initialSettings = {} }) {
   const [settings, setSettings] = useState(initialSettings);
@@ -13,6 +14,13 @@ export default function SettingsForm({ initialSettings = {} }) {
 
   function update(key, value) {
     setSettings((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function timeHint(value) {
+    const formatted = formatClockTime(value);
+    return formatted && formatted !== "—" && formatted !== String(value || "").trim()
+      ? `Shows as ${formatted}`
+      : null;
   }
 
   async function handleSubmit(e) {
@@ -80,6 +88,11 @@ export default function SettingsForm({ initialSettings = {} }) {
             value={settings.withdrawal_window_start || ""}
             onChange={(e) => update("withdrawal_window_start", e.target.value)}
           />
+          {timeHint(settings.withdrawal_window_start) ? (
+            <p className="mt-1 text-[11px] text-white/40">
+              {timeHint(settings.withdrawal_window_start)}
+            </p>
+          ) : null}
         </div>
         <div>
           <label className="mb-1 block text-xs text-white/50">Window End</label>
@@ -90,6 +103,11 @@ export default function SettingsForm({ initialSettings = {} }) {
             value={settings.withdrawal_window_end || ""}
             onChange={(e) => update("withdrawal_window_end", e.target.value)}
           />
+          {timeHint(settings.withdrawal_window_end) ? (
+            <p className="mt-1 text-[11px] text-white/40">
+              {timeHint(settings.withdrawal_window_end)}
+            </p>
+          ) : null}
         </div>
         <div>
           <label className="mb-1 block text-xs text-white/50">Release Batch Time</label>
@@ -100,6 +118,11 @@ export default function SettingsForm({ initialSettings = {} }) {
             value={settings.withdrawal_release_time || ""}
             onChange={(e) => update("withdrawal_release_time", e.target.value)}
           />
+          {timeHint(settings.withdrawal_release_time) ? (
+            <p className="mt-1 text-[11px] text-white/40">
+              {timeHint(settings.withdrawal_release_time)}
+            </p>
+          ) : null}
         </div>
         <div>
           <label className="mb-1 block text-xs text-white/50">KYC Required</label>
@@ -133,7 +156,7 @@ export default function SettingsForm({ initialSettings = {} }) {
         <h3 className="font-display text-lg text-white">Daily ROI</h3>
         <p className="text-xs text-white/45">
           Credits due daily returns (Asia/Manila), catches up missed days, and
-          returns principal when a plan ends. Production cron runs at 00:05 Manila.
+          returns principal when a plan ends. Production cron runs at 12:05 AM Manila.
         </p>
         <button
           type="button"

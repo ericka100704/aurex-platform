@@ -3,6 +3,7 @@ import { getSettingsMap, settingNumber } from "@/lib/settings";
 import { toNumber } from "@/lib/serialize";
 import { createNotification, formatCurrency } from "@/lib/notifications";
 import { adjustWallet } from "@/lib/ledger";
+import { formatClockTime } from "@/lib/utils";
 
 /** Current time parts in a given IANA timezone */
 export function getZonedParts(date = new Date(), timeZone = "Asia/Manila") {
@@ -59,7 +60,7 @@ export async function assertWithdrawalWindowOpen() {
 
   if (now < start || now >= end) {
     const err = new Error(
-      `Withdrawals are only accepted from ${settings.withdrawal_window_start} to ${settings.withdrawal_window_end} (${tz}). Batch release is at ${settings.withdrawal_release_time}.`
+      `Withdrawals are only accepted from ${formatClockTime(settings.withdrawal_window_start)} to ${formatClockTime(settings.withdrawal_window_end)} (${tz}). Batch release is at ${formatClockTime(settings.withdrawal_release_time)}.`
     );
     err.code = "WITHDRAWAL_WINDOW_CLOSED";
     throw err;

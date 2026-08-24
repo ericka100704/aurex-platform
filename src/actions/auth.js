@@ -46,7 +46,7 @@ async function issueEmailVerify(userId, email) {
       emailVerifyExpires: tokenExpiry(24),
     },
   });
-  await sendVerifyEmail(email, raw);
+  return sendVerifyEmail(email, raw);
 }
 
 export async function registerAction(formData) {
@@ -249,8 +249,14 @@ export async function resendVerifyEmailAction() {
   });
   if (!limit.ok) return { ok: false, message: limit.message };
 
-  await issueEmailVerify(user.id, user.email);
-  return { ok: true, message: "Verification email sent. Check your inbox (or server logs in dev)." };
+  const sent = await issueEmailVerify(user.id, user.email);
+  if (!sent?.ok) {
+    return {
+      ok: false,
+      message: sent?.message || "Could not send verification email.",
+    };
+  }
+  return { ok: true, message: "Verification email sent. Check your inbox and spam." };
 }
 
 export async function updateProfileAction(formData) {

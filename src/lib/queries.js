@@ -161,6 +161,26 @@ export async function getPendingWithdrawals() {
   );
 }
 
+export async function getRecentWithdrawals(limit = 40) {
+  const rows = await prisma.withdrawal.findMany({
+    where: { status: { in: ["APPROVED", "REJECTED"] } },
+    include: { user: { select: { fullName: true } } },
+    orderBy: [{ reviewedAt: "desc" }, { createdAt: "desc" }],
+    take: limit,
+  });
+  return serialize(
+    rows.map((w) => ({
+      id: w.id,
+      user: w.user.fullName,
+      amount: toNumber(w.amount),
+      method: w.methodType,
+      accountDetails: w.accountDetails,
+      createdAt: new Date(w.reviewedAt || w.createdAt).toLocaleString("en-PH"),
+      status: w.status,
+    }))
+  );
+}
+
 export async function getAdminInvestments() {
   const rows = await prisma.investment.findMany({
     include: {

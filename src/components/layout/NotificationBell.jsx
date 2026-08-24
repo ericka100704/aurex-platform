@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Bell } from "lucide-react";
 import {
   getNotificationsAction,
+  getUnreadCountAction,
   markAllNotificationsReadAction,
   markNotificationReadAction,
 } from "@/actions/notifications";
@@ -78,15 +79,20 @@ export default function NotificationBell() {
     setUnread(result.unread || 0);
   }
 
+  async function loadUnread() {
+    const result = await getUnreadCountAction();
+    if (result?.ok) setUnread(result.unread || 0);
+  }
+
   useEffect(() => {
     function tick() {
       if (typeof document !== "undefined" && document.visibilityState === "hidden") {
         return;
       }
-      void load();
+      void loadUnread();
     }
     tick();
-    const interval = setInterval(tick, 60_000);
+    const interval = setInterval(tick, 120_000);
     document.addEventListener("visibilitychange", tick);
     return () => {
       clearInterval(interval);

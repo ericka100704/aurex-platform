@@ -49,12 +49,12 @@ export default function Sidebar({
                 <Link
                   key={item.href}
                   href={item.href}
-                  prefetch
+                  prefetch={false}
                   onClick={onClose}
                   className={cn(
-                    "relative flex items-center gap-3 rounded-full px-4 py-3 text-sm transition-colors duration-150",
+                    "relative flex items-center gap-3 rounded-full px-4 py-3 text-sm",
                     active
-                      ? "bg-nav-active text-white shadow-glow"
+                      ? "bg-nav-active text-white"
                       : "text-white/50 hover:bg-white/[0.04] hover:text-white/85"
                   )}
                 >

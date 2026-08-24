@@ -84,18 +84,18 @@ export default function HomeLanding({ plans = [], rewards }) {
   const maxLevel = rewards?.maxLevel ?? 4;
 
   return (
-    <div className="relative min-h-dvh overflow-x-hidden bg-dark">
+    <div className="relative min-h-dvh overflow-x-hidden bg-[#0d0d0d]">
       <div className="pointer-events-none absolute inset-0">
         <Image
           src="/aurex-bg.png"
           alt=""
           fill
           priority
-          className="object-cover opacity-[0.38]"
+          quality={50}
+          className="object-cover opacity-[0.22]"
           sizes="100vw"
         />
-        <div className="absolute inset-0 bg-dark/50" />
-        <div className="absolute inset-x-0 top-[40%] hidden h-72 bg-gradient-to-t from-gold/10 via-rose/5 to-transparent md:block md:blur-2xl" />
+        <div className="absolute inset-0 bg-[#0d0d0d]/55" />
       </div>
 
       <div className="relative z-10 mx-auto flex max-w-6xl flex-col px-5 pb-16 pt-5 md:px-8">
