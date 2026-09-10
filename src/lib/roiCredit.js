@@ -215,57 +215,73 @@ export async function runDailyRoiCredit(now = new Date()) {
   return summary;
 }
 
-/** In-flight + soft throttle so parallel layout/page loads share one run. */
+/** In-flight + DB gate so serverless navigations stay fast. */
 let ensurePromise = null;
-let lastEnsureAt = 0;
-const ENSURE_THROTTLE_MS = 20_000;
+const GATE_KEY = "roi_ensure_gate";
+const GATE_TTL_MS = 60_000;
+
+function manilaDayStart(now = new Date()) {
+  const key = zonedDateKey(now, TZ);
+  return new Date(`${key}T00:00:00+08:00`);
+}
+
+async function readEnsureGate() {
+  const row = await prisma.systemSetting.findUnique({ where: { key: GATE_KEY } });
+  const last = Number(row?.value);
+  return Number.isFinite(last) ? last : 0;
+}
+
+async function touchEnsureGate() {
+  const value = String(Date.now());
+  await prisma.systemSetting.upsert({
+    where: { key: GATE_KEY },
+    create: {
+      key: GATE_KEY,
+      value,
+      label: "ROI ensure gate",
+      group: "system",
+    },
+    update: { value },
+  });
+}
 
 /**
- * Auto catch-up when cron is missed or investments became due after midnight.
- * Safe on every authenticated dashboard/admin load: no-ops when nothing is due.
- * Concurrent callers await the same in-flight run so earned balance is fresh.
+ * Auto catch-up when cron is missed. Call only from money/investment loaders —
+ * not from getCurrentUser/layout — so page-to-page navigation stays snappy.
+ * Cheap probe + 60s cross-instance gate; concurrent callers share one in-flight run.
  */
 export async function ensureDailyRoiCredit(now = new Date()) {
   if (ensurePromise) return ensurePromise;
 
-  const t = Date.now();
-  if (t - lastEnsureAt < ENSURE_THROTTLE_MS) {
-    return { ok: true, ran: false, reason: "throttled" };
-  }
-
   ensurePromise = (async () => {
     try {
-      const investments = await prisma.investment.findMany({
-        where: { status: "ACTIVE" },
-        select: {
-          startDate: true,
-          createdAt: true,
-          endDate: true,
-          lastRoiAt: true,
-          dailyReturn: true,
-          totalExpected: true,
-          earnedAmount: true,
-          amount: true,
+      const last = await readEnsureGate();
+      if (Date.now() - last < GATE_TTL_MS) {
+        return { ok: true, ran: false, reason: "throttled" };
+      }
+
+      // Claim the gate early so parallel serverless requests skip the heavy path.
+      await touchEnsureGate();
+
+      const dayStart = manilaDayStart(now);
+      const dueProbe = await prisma.investment.findFirst({
+        where: {
+          status: "ACTIVE",
+          OR: [
+            { lastRoiAt: null, startDate: { lt: dayStart } },
+            { lastRoiAt: { lt: dayStart } },
+            { endDate: { lte: now } },
+          ],
         },
+        select: { id: true },
       });
 
-      const hasDue = investments.some((inv) => {
-        const preview = planInvestmentRoi(inv, now);
-        return preview.profitToCredit > 0 || preview.shouldComplete;
-      });
-
-      if (!hasDue) {
-        lastEnsureAt = Date.now();
-        return {
-          ok: true,
-          ran: false,
-          reason: "nothing_due",
-          processed: investments.length,
-        };
+      if (!dueProbe) {
+        return { ok: true, ran: false, reason: "nothing_due" };
       }
 
       const summary = await runDailyRoiCredit(now);
-      lastEnsureAt = Date.now();
+      await touchEnsureGate();
       return { ok: true, ran: true, ...summary };
     } finally {
       ensurePromise = null;

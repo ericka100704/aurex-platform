@@ -8,6 +8,7 @@ import PlanCard from "@/components/dashboard/PlanCard";
 import { requireUser } from "@/lib/auth";
 import {
   getActivePlans,
+  getUserBalance,
   getUserInvestments,
   getUserReferrals,
 } from "@/lib/queries";
@@ -17,10 +18,11 @@ export const dynamic = "force-dynamic";
 
 export default async function UserDashboardPage() {
   const user = await requireUser();
-  const [plans, investments, referrals] = await Promise.all([
+  const [plans, investments, referrals, balance] = await Promise.all([
     getActivePlans(),
     getUserInvestments(user.id),
     getUserReferrals(user.id),
+    getUserBalance(user.id),
   ]);
 
   const active = investments.filter((i) => i.status === "ACTIVE");
@@ -36,7 +38,7 @@ export default async function UserDashboardPage() {
         <StatCard
           href="/dashboard/wallet/available"
           label="Available Balance"
-          value={formatCurrency(user.balance)}
+          value={formatCurrency(balance)}
           subtext="Ready to invest or withdraw"
           icon="wallet"
           accent="gold"

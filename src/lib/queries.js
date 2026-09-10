@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { serialize, toNumber } from "@/lib/serialize";
 import { getSettingsMap } from "@/lib/settings";
@@ -56,6 +57,16 @@ export const getUserInvestments = cache(async (userId) => {
   );
 });
 
+/** Fresh wallet balance after ROI catch-up (use on money pages). */
+export const getUserBalance = cache(async (userId) => {
+  await ensureDailyRoiCredit();
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { balance: true },
+  });
+  return toNumber(user?.balance);
+});
+
 export const getUserLedger = cache(async (userId, take = 80) => {
   await ensureDailyRoiCredit();
   const rows = await prisma.walletLedger.findMany({
@@ -85,7 +96,8 @@ export const getUserReferrals = cache(async (userId) => {
   );
 });
 
-function mapDepositRows(rows) {
+function mapDepositRows(rows, proofIds = null) {
+  const withProof = proofIds ? new Set(proofIds) : null;
   return serialize(
     rows.map((d) => ({
       id: d.id,
@@ -95,42 +107,65 @@ function mapDepositRows(rows) {
       createdAt: new Date(d.createdAt).toLocaleString("en-PH"),
       status: d.status,
       provider: d.provider || "manual",
-      hasProof: Boolean(d.proofImageUrl),
+      hasProof: withProof
+        ? withProof.has(d.id)
+        : Boolean(d.proofImageUrl),
     }))
   );
 }
 
-export async function getPendingDeposits() {
+/** Load deposit list fields without pulling huge proof data URLs. */
+async function loadDepositList(where, { take } = {}) {
   const rows = await prisma.deposit.findMany({
-    where: {
-      status: "PENDING",
-      OR: [{ provider: "manual" }, { provider: null }],
-    },
-    include: {
+    where,
+    select: {
+      id: true,
+      amount: true,
+      status: true,
+      provider: true,
+      createdAt: true,
       user: { select: { fullName: true } },
       method: { select: { name: true } },
     },
     orderBy: { createdAt: "desc" },
+    ...(take ? { take } : {}),
   });
-  return mapDepositRows(rows);
+
+  if (rows.length === 0) return mapDepositRows([]);
+
+  const ids = rows.map((r) => r.id);
+  const proofRows = await prisma.$queryRaw`
+    SELECT id FROM deposits
+    WHERE id IN (${Prisma.join(ids)})
+      AND proof_image_url IS NOT NULL
+      AND proof_image_url <> ''
+  `;
+  const proofIds = proofRows.map((r) => r.id);
+  return mapDepositRows(rows, proofIds);
+}
+
+export async function getPendingDeposits() {
+  return loadDepositList({
+    status: "PENDING",
+    OR: [{ provider: "manual" }, { provider: null }],
+  });
 }
 
 export async function getRecentDeposits(limit = 40) {
-  const rows = await prisma.deposit.findMany({
-    include: {
-      user: { select: { fullName: true } },
-      method: { select: { name: true } },
-    },
-    orderBy: { createdAt: "desc" },
-    take: limit,
-  });
-  return mapDepositRows(rows);
+  return loadDepositList({}, { take: limit });
 }
 
 export async function getUserDeposits(userId) {
   const rows = await prisma.deposit.findMany({
     where: { userId },
-    include: { method: { select: { name: true } } },
+    select: {
+      id: true,
+      amount: true,
+      status: true,
+      createdAt: true,
+      reviewedAt: true,
+      method: { select: { name: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
   return serialize(
@@ -274,6 +309,7 @@ export async function getRecentRegistrations(limit = 15) {
 }
 
 export async function getAdminDashboardMetrics() {
+  await ensureDailyRoiCredit();
   const [
     totalUsers,
     activeInvestments,

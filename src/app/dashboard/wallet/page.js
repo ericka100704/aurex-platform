@@ -2,18 +2,20 @@ import Link from "next/link";
 import StatCard from "@/components/ui/StatCard";
 import GlassCard from "@/components/ui/GlassCard";
 import { requireUser } from "@/lib/auth";
-import { getUserInvestments } from "@/lib/queries";
+import { getUserBalance, getUserInvestments } from "@/lib/queries";
 import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function WalletPage() {
   const user = await requireUser();
-  const investments = await getUserInvestments(user.id);
+  const [investments, available] = await Promise.all([
+    getUserInvestments(user.id),
+    getUserBalance(user.id),
+  ]);
   const locked = investments
     .filter((i) => i.status === "ACTIVE")
     .reduce((s, i) => s + Number(i.amount || 0), 0);
-  const available = Number(user.balance);
   const equity = available + locked;
 
   return (

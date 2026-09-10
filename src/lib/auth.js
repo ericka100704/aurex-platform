@@ -4,7 +4,6 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { serialize } from "@/lib/serialize";
 import { getJwtSecret } from "@/lib/jwtSecret";
-import { ensureDailyRoiCredit } from "@/lib/roiCredit";
 
 const COOKIE_NAME = "aurex_session";
 
@@ -58,9 +57,6 @@ export async function getSession() {
 export const getCurrentUser = cache(async () => {
   const session = await getSession();
   if (!session?.sub) return null;
-
-  // Credit due daily ROI before reading balance so users see today's earnings immediately.
-  await ensureDailyRoiCredit();
 
   const user = await prisma.user.findUnique({
     where: { id: session.sub },
