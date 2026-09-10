@@ -147,6 +147,7 @@ export async function updateSettingsAction(values) {
   revalidateTag("settings");
   revalidatePath("/");
   revalidatePath("/admin/settings");
+  revalidatePath("/admin");
   revalidatePath("/dashboard/withdraw");
   revalidatePath("/dashboard/referrals");
   return { ok: true, message: "Settings saved." };

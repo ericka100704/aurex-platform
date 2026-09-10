@@ -156,7 +156,7 @@ export default function DepositMethodsEditor({ initialMethods = [] }) {
           {methods.map((m) => (
             <li
               key={m.id}
-              className="flex flex-col gap-3 rounded-xl border border-white/5 bg-white/[0.02] px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+              className="list-row-hover flex flex-col gap-3 rounded-xl border border-white/5 bg-white/[0.02] px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
             >
               <div>
                 <p className="text-sm text-white">

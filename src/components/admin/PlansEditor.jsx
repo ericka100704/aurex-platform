@@ -202,7 +202,7 @@ export default function PlansEditor({ initialPlans = [] }) {
             </thead>
             <tbody>
               {plans.map((plan) => (
-                <tr key={plan.id} className="border-t border-white/5 text-white/80">
+                <tr key={plan.id} className="list-row-hover border-t border-white/5 text-white/80">
                   <td className="px-4 py-3">
                     <p className="font-medium text-white">{plan.name}</p>
                     <p className="text-[11px] text-white/40">{plan.durationDays} days</p>

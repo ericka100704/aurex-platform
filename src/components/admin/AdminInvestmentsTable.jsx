@@ -86,7 +86,7 @@ export default function AdminInvestmentsTable({ investments = [] }) {
               </tr>
             ) : (
               filtered.map((inv) => (
-                <tr key={inv.id} className="border-t border-white/5 text-white/80">
+                <tr key={inv.id} className="list-row-hover border-t border-white/5 text-white/80">
                   <td className="px-4 py-3">
                     <p className="font-medium text-white">{inv.userName}</p>
                     <p className="text-[11px] text-white/40">{inv.userEmail}</p>

@@ -1,23 +1,27 @@
 import StatCard from "@/components/ui/StatCard";
 import ApprovalQueue from "@/components/admin/ApprovalQueue";
 import PlansEditor from "@/components/admin/PlansEditor";
+import RecentRegistrations from "@/components/admin/RecentRegistrations";
 import {
   getAdminDashboardMetrics,
   getAllPlans,
   getPendingDeposits,
   getPendingWithdrawals,
+  getRecentRegistrations,
 } from "@/lib/queries";
 import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
-  const [m, pendingWithdrawals, pendingDeposits, plans] = await Promise.all([
-    getAdminDashboardMetrics(),
-    getPendingWithdrawals(),
-    getPendingDeposits(),
-    getAllPlans(),
-  ]);
+  const [m, pendingWithdrawals, pendingDeposits, plans, registrations] =
+    await Promise.all([
+      getAdminDashboardMetrics(),
+      getPendingWithdrawals(),
+      getPendingDeposits(),
+      getAllPlans(),
+      getRecentRegistrations(),
+    ]);
 
   return (
     <div className="space-y-6">
@@ -71,6 +75,8 @@ export default async function AdminDashboardPage() {
           delay={0.25}
         />
       </div>
+
+      <RecentRegistrations registrations={registrations} />
 
       <ApprovalQueue
         title="Deposit Approval Queue"

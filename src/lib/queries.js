@@ -3,6 +3,7 @@ import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { serialize, toNumber } from "@/lib/serialize";
 import { getSettingsMap } from "@/lib/settings";
+import { ensureDailyRoiCredit } from "@/lib/roiCredit";
 
 export const getActivePlans = unstable_cache(
   async () => {
@@ -41,6 +42,7 @@ export async function getAllDepositMethods() {
 }
 
 export const getUserInvestments = cache(async (userId) => {
+  await ensureDailyRoiCredit();
   const investments = await prisma.investment.findMany({
     where: { userId },
     include: { plan: true },
@@ -55,6 +57,7 @@ export const getUserInvestments = cache(async (userId) => {
 });
 
 export const getUserLedger = cache(async (userId, take = 80) => {
+  await ensureDailyRoiCredit();
   const rows = await prisma.walletLedger.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
@@ -182,6 +185,7 @@ export async function getRecentWithdrawals(limit = 40) {
 }
 
 export async function getAdminInvestments() {
+  await ensureDailyRoiCredit();
   const rows = await prisma.investment.findMany({
     include: {
       user: { select: { fullName: true, email: true } },
@@ -219,9 +223,54 @@ export async function getManagedUsers() {
       role: true,
       referralCode: true,
       createdAt: true,
+      referredBy: {
+        select: { fullName: true, referralCode: true },
+      },
     },
   });
-  return serialize(users);
+  return serialize(
+    users.map((u) => ({
+      id: u.id,
+      fullName: u.fullName,
+      email: u.email,
+      balance: toNumber(u.balance),
+      status: u.status,
+      role: u.role,
+      referralCode: u.referralCode,
+      createdAt: u.createdAt,
+      referredByName: u.referredBy?.fullName || null,
+      referredByCode: u.referredBy?.referralCode || null,
+    }))
+  );
+}
+
+export async function getRecentRegistrations(limit = 15) {
+  const users = await prisma.user.findMany({
+    where: { role: "USER" },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      referralCode: true,
+      createdAt: true,
+      referredBy: {
+        select: { fullName: true, referralCode: true },
+      },
+    },
+  });
+  return serialize(
+    users.map((u) => ({
+      id: u.id,
+      fullName: u.fullName,
+      email: u.email,
+      referralCode: u.referralCode,
+      createdAt: new Date(u.createdAt).toLocaleString("en-PH"),
+      referredByName: u.referredBy?.fullName || null,
+      referredByCode: u.referredBy?.referralCode || null,
+    }))
+  );
 }
 
 export async function getAdminDashboardMetrics() {

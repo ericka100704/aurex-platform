@@ -56,7 +56,7 @@ function PlanGroup({ name, items }) {
         {items.map((inv) => (
           <article
             key={inv.id}
-            className="rounded-2xl border border-white/[0.07] bg-black/25 p-3.5"
+            className="list-row-hover rounded-2xl border border-white/[0.07] bg-black/25 p-3.5"
           >
             <div className="flex items-start justify-between gap-3">
               <p className="font-display text-xl text-gold">{formatCurrency(inv.amount)}</p>
@@ -100,7 +100,7 @@ function PlanGroup({ name, items }) {
             {items.map((inv) => (
               <tr
                 key={inv.id}
-                className="border-t border-white/[0.05] text-white/75"
+                className="list-row-hover border-t border-white/[0.05] text-white/75"
               >
                 <td className="px-5 py-3.5 text-gold">{formatCurrency(inv.amount)}</td>
                 <td className="px-5 py-3.5">{formatCurrency(inv.dailyReturn)}</td>

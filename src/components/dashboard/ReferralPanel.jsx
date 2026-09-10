@@ -91,7 +91,7 @@ export default function ReferralPanel({
           shown.map((ref) => (
             <li
               key={ref.id}
-              className="flex items-center justify-between rounded-2xl border border-white/[0.06] bg-black/20 px-3 py-2.5"
+              className="list-row-hover flex items-center justify-between rounded-2xl border border-white/[0.06] bg-black/20 px-3 py-2.5"
             >
               <div>
                 <p className="text-sm text-white">{ref.name}</p>

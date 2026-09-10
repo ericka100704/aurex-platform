@@ -214,3 +214,63 @@ export async function runDailyRoiCredit(now = new Date()) {
   revalidateRoiPaths();
   return summary;
 }
+
+/** In-flight + soft throttle so parallel layout/page loads share one run. */
+let ensurePromise = null;
+let lastEnsureAt = 0;
+const ENSURE_THROTTLE_MS = 20_000;
+
+/**
+ * Auto catch-up when cron is missed or investments became due after midnight.
+ * Safe on every authenticated dashboard/admin load: no-ops when nothing is due.
+ * Concurrent callers await the same in-flight run so earned balance is fresh.
+ */
+export async function ensureDailyRoiCredit(now = new Date()) {
+  if (ensurePromise) return ensurePromise;
+
+  const t = Date.now();
+  if (t - lastEnsureAt < ENSURE_THROTTLE_MS) {
+    return { ok: true, ran: false, reason: "throttled" };
+  }
+
+  ensurePromise = (async () => {
+    try {
+      const investments = await prisma.investment.findMany({
+        where: { status: "ACTIVE" },
+        select: {
+          startDate: true,
+          createdAt: true,
+          endDate: true,
+          lastRoiAt: true,
+          dailyReturn: true,
+          totalExpected: true,
+          earnedAmount: true,
+          amount: true,
+        },
+      });
+
+      const hasDue = investments.some((inv) => {
+        const preview = planInvestmentRoi(inv, now);
+        return preview.profitToCredit > 0 || preview.shouldComplete;
+      });
+
+      if (!hasDue) {
+        lastEnsureAt = Date.now();
+        return {
+          ok: true,
+          ran: false,
+          reason: "nothing_due",
+          processed: investments.length,
+        };
+      }
+
+      const summary = await runDailyRoiCredit(now);
+      lastEnsureAt = Date.now();
+      return { ok: true, ran: true, ...summary };
+    } finally {
+      ensurePromise = null;
+    }
+  })();
+
+  return ensurePromise;
+}

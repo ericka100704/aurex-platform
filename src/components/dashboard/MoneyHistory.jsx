@@ -16,7 +16,7 @@ function GroupCard({ title, subtitle, items }) {
         {items.map((row) => (
           <article
             key={row.id}
-            className="rounded-2xl border border-white/[0.07] bg-black/25 p-3.5"
+            className="list-row-hover rounded-2xl border border-white/[0.07] bg-black/25 p-3.5"
           >
             <div className="flex items-start justify-between gap-3">
               <p className="font-display text-xl text-gold">{formatCurrency(row.amount)}</p>
@@ -46,7 +46,7 @@ function GroupCard({ title, subtitle, items }) {
           </thead>
           <tbody>
             {items.map((row) => (
-              <tr key={row.id} className="border-t border-white/[0.05] text-white/75">
+              <tr key={row.id} className="list-row-hover border-t border-white/[0.05] text-white/75">
                 <td className="px-5 py-3.5 text-gold">{formatCurrency(row.amount)}</td>
                 <td className="px-5 py-3.5">{formatDate(row.date)}</td>
                 {items.some((item) => item.detail) ? (

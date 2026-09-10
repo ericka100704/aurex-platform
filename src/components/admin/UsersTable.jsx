@@ -38,7 +38,9 @@ export default function UsersTable({ initialUsers = [] }) {
       return (
         String(user.fullName || "").toLowerCase().includes(term) ||
         String(user.email || "").toLowerCase().includes(term) ||
-        String(user.referralCode || "").toLowerCase().includes(term)
+        String(user.referralCode || "").toLowerCase().includes(term) ||
+        String(user.referredByName || "").toLowerCase().includes(term) ||
+        String(user.referredByCode || "").toLowerCase().includes(term)
       );
     });
   }, [users, q, status]);
@@ -77,7 +79,7 @@ export default function UsersTable({ initialUsers = [] }) {
         <div className="flex flex-wrap items-center gap-2">
           <input
             className="input-luxury min-w-[12rem] py-2 text-sm"
-            placeholder="Search name, email, or ref code"
+            placeholder="Search name, email, ref, or referrer"
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -104,6 +106,7 @@ export default function UsersTable({ initialUsers = [] }) {
           <thead className="bg-white/[0.02] text-xs uppercase tracking-wider text-white/40">
             <tr>
               <th className="px-4 py-3">User</th>
+              <th className="px-4 py-3">Referred by</th>
               <th className="px-4 py-3">Balance</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Role</th>
@@ -113,17 +116,27 @@ export default function UsersTable({ initialUsers = [] }) {
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-white/40">
+                <td colSpan={6} className="px-4 py-8 text-center text-white/40">
                   No users found
                 </td>
               </tr>
             ) : (
               filtered.map((user) => (
-                <tr key={user.id} className="border-t border-white/5 text-white/80">
+                <tr key={user.id} className="list-row-hover border-t border-white/5 text-white/80">
                   <td className="px-4 py-3">
                     <p className="font-medium text-white">{user.fullName}</p>
                     <p className="text-[11px] text-white/40">{user.email}</p>
-                    <p className="text-[11px] text-gold/70">Ref: {user.referralCode}</p>
+                    <p className="text-[11px] text-gold/70">Own code: {user.referralCode}</p>
+                  </td>
+                  <td className="px-4 py-3">
+                    {user.referredByName ? (
+                      <>
+                        <p className="text-sm text-white">{user.referredByName}</p>
+                        <p className="text-[11px] text-white/40">{user.referredByCode}</p>
+                      </>
+                    ) : (
+                      <p className="text-xs text-white/40">Direct signup</p>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <p className="font-medium text-gold">{formatCurrency(user.balance)}</p>

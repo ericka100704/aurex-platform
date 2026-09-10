@@ -52,7 +52,7 @@ export default function WalletHistory({
             return (
               <article
                 key={row.id}
-                className="rounded-2xl border border-white/[0.07] bg-black/25 p-3.5"
+                className="list-row-hover rounded-2xl border border-white/[0.07] bg-black/25 p-3.5"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -104,7 +104,7 @@ export default function WalletHistory({
                 return (
                   <tr
                     key={row.id}
-                    className="border-t border-white/[0.05] text-white/75"
+                    className="list-row-hover border-t border-white/[0.05] text-white/75"
                   >
                     <td className="whitespace-nowrap px-5 py-3.5 text-white/55">
                       {formatDateTime(row.createdAt)}

@@ -173,6 +173,10 @@ body {
     background-clip: text;
     color: transparent;
   }
+
+  .list-row-hover {
+    @apply transition-colors duration-150;
+  }
 }
 
 /* Hide scrollbar, keep scroll */
@@ -228,6 +232,14 @@ label {
     border-color: #ff80c3;
     background: rgba(255, 77, 166, 0.12);
     color: #f5ebc3;
+  }
+
+  .list-row-hover:hover {
+    background-color: rgba(255, 255, 255, 0.045);
+  }
+
+  tr.list-row-hover:hover {
+    background-color: rgba(255, 105, 180, 0.06);
   }
 }
 

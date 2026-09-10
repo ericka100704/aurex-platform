@@ -38,7 +38,7 @@ Copy from local `.env` unless noted.
 1. Redeploy Production.
 2. Hard-refresh https://www.aurex.click
 3. Smoke test: login, deposit receipt upload, profile photo, withdraw (GCash number), admin Investments.
-4. Confirm cron: Vercel **Settings → Crons** (Hobby may not run crons). Fallback: Admin → Settings → Run daily ROI now.
+4. Confirm cron: Vercel **Settings → Crons** (Hobby may not run crons). ROI also auto catch-ups on any dashboard/admin page load when days are due.
 
 ## If something breaks
 
@@ -46,7 +46,7 @@ Copy from local `.env` unless noted.
 |---|---|
 | Login / JWT error | `JWT_SECRET` |
 | DB / Prisma errors | `DATABASE_URL` / `DIRECT_URL` |
-| No ROI at midnight Manila | `CRON_SECRET` or cron not enabled |
+| No ROI at midnight Manila | `CRON_SECRET` or cron not enabled — open dashboard/admin once to auto catch-up |
 | Receipt / avatar upload fails | Supabase URL + service_role |
 | No verify / reset emails | `RESEND_API_KEY` + `MAIL_FROM` |
 | Verify links go to localhost | `NEXT_PUBLIC_APP_URL` |

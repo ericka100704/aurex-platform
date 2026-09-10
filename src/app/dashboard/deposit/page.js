@@ -40,7 +40,7 @@ export default async function DepositPage() {
           {methods.map((m) => (
             <li
               key={m.id}
-              className="rounded-2xl border border-white/[0.06] bg-black/20 px-3 py-2"
+              className="list-row-hover rounded-2xl border border-white/[0.06] bg-black/20 px-3 py-2"
             >
               <p className="text-gold">{m.name}</p>
               <p className="text-xs text-white/50">

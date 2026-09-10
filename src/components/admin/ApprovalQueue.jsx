@@ -95,7 +95,7 @@ export default function ApprovalQueue({
             items.map((item) => (
               <li
                 key={item.id}
-                className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+                className="list-row-hover flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
                   <p className="font-medium text-white">{item.user}</p>
