@@ -4,7 +4,6 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { serialize, toNumber } from "@/lib/serialize";
 import { getSettingsMap } from "@/lib/settings";
-import { ensureDailyRoiCredit } from "@/lib/roiCredit";
 
 export const getActivePlans = unstable_cache(
   async () => {
@@ -43,7 +42,6 @@ export async function getAllDepositMethods() {
 }
 
 export const getUserInvestments = cache(async (userId) => {
-  await ensureDailyRoiCredit();
   const investments = await prisma.investment.findMany({
     where: { userId },
     include: { plan: true },
@@ -57,9 +55,8 @@ export const getUserInvestments = cache(async (userId) => {
   );
 });
 
-/** Fresh wallet balance after ROI catch-up (use on money pages). */
+/** Fresh wallet balance (use on money pages). */
 export const getUserBalance = cache(async (userId) => {
-  await ensureDailyRoiCredit();
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { balance: true },
@@ -68,7 +65,6 @@ export const getUserBalance = cache(async (userId) => {
 });
 
 export const getUserLedger = cache(async (userId, take = 80) => {
-  await ensureDailyRoiCredit();
   const rows = await prisma.walletLedger.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
@@ -220,7 +216,6 @@ export async function getRecentWithdrawals(limit = 40) {
 }
 
 export async function getAdminInvestments() {
-  await ensureDailyRoiCredit();
   const rows = await prisma.investment.findMany({
     include: {
       user: { select: { fullName: true, email: true } },
@@ -309,7 +304,6 @@ export async function getRecentRegistrations(limit = 15) {
 }
 
 export async function getAdminDashboardMetrics() {
-  await ensureDailyRoiCredit();
   const [
     totalUsers,
     activeInvestments,

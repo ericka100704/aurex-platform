@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
+import RoiCatchUp from "./RoiCatchUp";
 
 export default function DashboardShell({
   children,
@@ -26,6 +27,7 @@ export default function DashboardShell({
 
   return (
     <div className="dash-shell min-h-dvh overflow-x-hidden">
+      <RoiCatchUp />
       <Sidebar
         variant={variant}
         baseHref={baseHref}

@@ -49,7 +49,6 @@ export default function Sidebar({
                 <Link
                   key={item.href}
                   href={item.href}
-                  prefetch={false}
                   onClick={onClose}
                   className={cn(
                     "relative flex items-center gap-3 rounded-full px-4 py-3 text-sm",

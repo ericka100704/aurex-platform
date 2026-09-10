@@ -156,9 +156,9 @@ export default function SettingsForm({ initialSettings = {} }) {
         <h3 className="font-display text-lg text-white">Daily ROI</h3>
         <p className="text-xs text-white/45">
           Credits due daily returns (Asia/Manila), catches up missed days, and
-          returns principal when a plan ends. Users see today&apos;s ROI as soon as
-          they open the dashboard (auto catch-up). Cron still runs at 12:05 AM
-          Manila; use the button only for an immediate force-run.
+          returns principal when a plan ends. Runs in the background after login
+          and via cron at 12:05 AM Manila — navigation stays instant. Use the
+          button only for an immediate force-run.
         </p>
         <button
           type="button"
