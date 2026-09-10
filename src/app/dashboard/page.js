@@ -4,26 +4,15 @@ import StatCard from "@/components/ui/StatCard";
 import GlassCard from "@/components/ui/GlassCard";
 import RoiChart from "@/components/dashboard/RoiChart";
 import InvestmentTable from "@/components/dashboard/InvestmentTable";
-import PlanCard from "@/components/dashboard/PlanCard";
 import { requireUser } from "@/lib/auth";
-import {
-  getActivePlans,
-  getUserBalance,
-  getUserInvestments,
-  getUserReferrals,
-} from "@/lib/queries";
+import { getUserOverview } from "@/lib/queries";
 import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function UserDashboardPage() {
   const user = await requireUser();
-  const [plans, investments, referrals, balance] = await Promise.all([
-    getActivePlans(),
-    getUserInvestments(user.id),
-    getUserReferrals(user.id),
-    getUserBalance(user.id),
-  ]);
+  const { investments, referralCount } = await getUserOverview(user.id);
 
   const active = investments.filter((i) => i.status === "ACTIVE");
   const locked = active.reduce((s, i) => s + Number(i.amount || 0), 0);
@@ -38,7 +27,7 @@ export default async function UserDashboardPage() {
         <StatCard
           href="/dashboard/wallet/available"
           label="Available Balance"
-          value={formatCurrency(balance)}
+          value={formatCurrency(user.balance)}
           subtext="Ready to invest or withdraw"
           icon="wallet"
           accent="gold"
@@ -50,7 +39,6 @@ export default async function UserDashboardPage() {
           subtext={formatCurrency(locked) + " locked"}
           icon="piggyBank"
           accent="rose"
-          delay={0.05}
         />
         <StatCard
           href="/dashboard/wallet/equity"
@@ -59,16 +47,14 @@ export default async function UserDashboardPage() {
           subtext="Lifetime earnings"
           icon="trendingUp"
           accent="gold"
-          delay={0.1}
         />
         <StatCard
           href="/dashboard/referrals"
           label="Direct Referrals"
-          value={String(referrals.length)}
+          value={String(referralCount)}
           subtext={`Code: ${user.referralCode}`}
           icon="users"
           accent="rose"
-          delay={0.15}
         />
       </div>
 
@@ -101,19 +87,21 @@ export default async function UserDashboardPage() {
         </div>
       </div>
 
-      <InvestmentTable investments={investments} />
-
-      <section className="pt-2">
-        <div className="mb-6">
-          <h2 className="font-display text-2xl text-white">Featured Plans</h2>
-          <p className="mt-1 text-sm text-white/40">Live plans from database</p>
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <h2 className="font-display text-xl text-white">Active positions</h2>
+          <p className="mt-1 text-sm text-white/40">
+            Quick view — full history on Investments
+          </p>
         </div>
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3 xl:gap-6">
-          {plans.map((plan, index) => (
-            <PlanCard key={plan.id} plan={plan} delay={index * 0.08} />
-          ))}
-        </div>
-      </section>
+        <Link
+          href="/dashboard/investments"
+          className="text-sm text-gold hover:underline"
+        >
+          View all
+        </Link>
+      </div>
+      <InvestmentTable investments={active} />
     </div>
   );
 }

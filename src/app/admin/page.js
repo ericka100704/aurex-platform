@@ -1,10 +1,8 @@
 import StatCard from "@/components/ui/StatCard";
 import ApprovalQueue from "@/components/admin/ApprovalQueue";
-import PlansEditor from "@/components/admin/PlansEditor";
 import RecentRegistrations from "@/components/admin/RecentRegistrations";
 import {
   getAdminDashboardMetrics,
-  getAllPlans,
   getPendingDeposits,
   getPendingWithdrawals,
   getRecentRegistrations,
@@ -14,12 +12,11 @@ import { formatCurrency } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
-  const [m, pendingWithdrawals, pendingDeposits, plans, registrations] =
+  const [m, pendingWithdrawals, pendingDeposits, registrations] =
     await Promise.all([
       getAdminDashboardMetrics(),
       getPendingWithdrawals(),
       getPendingDeposits(),
-      getAllPlans(),
       getRecentRegistrations(),
     ]);
 
@@ -39,7 +36,6 @@ export default async function AdminDashboardPage() {
           value={m.activeInvestments.toLocaleString()}
           icon="layers"
           accent="rose"
-          delay={0.05}
         />
         <StatCard
           href="/admin/deposits"
@@ -47,7 +43,6 @@ export default async function AdminDashboardPage() {
           value={String(m.depositsToday)}
           icon="arrowDown"
           accent="gold"
-          delay={0.1}
         />
         <StatCard
           href="/admin/withdrawals"
@@ -55,7 +50,6 @@ export default async function AdminDashboardPage() {
           value={String(m.pendingWithdrawals)}
           icon="arrowUp"
           accent="rose"
-          delay={0.15}
         />
         <StatCard
           href="/admin/deposits"
@@ -63,16 +57,14 @@ export default async function AdminDashboardPage() {
           value={formatCurrency(m.totalVolume)}
           icon="chart"
           accent="gold"
-          delay={0.2}
         />
         <StatCard
-          href="/admin/settings"
-          label="Site"
-          value="AUREX"
-          subtext="Live database connected"
+          href="/admin/plans"
+          label="Plans"
+          value="Editor"
+          subtext="Create and update plans"
           icon="coins"
           accent="rose"
-          delay={0.25}
         />
       </div>
 
@@ -91,8 +83,6 @@ export default async function AdminDashboardPage() {
         items={pendingWithdrawals}
         type="withdrawal"
       />
-
-      <PlansEditor initialPlans={plans} />
     </div>
   );
 }

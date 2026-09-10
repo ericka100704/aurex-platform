@@ -55,6 +55,40 @@ export const getUserInvestments = cache(async (userId) => {
   );
 });
 
+/** Lean payload for dashboard overview — fewer columns, fewer round-trips. */
+export const getUserOverview = cache(async (userId) => {
+  const [investments, referralCount] = await Promise.all([
+    prisma.investment.findMany({
+      where: { userId },
+      select: {
+        id: true,
+        amount: true,
+        earnedAmount: true,
+        dailyReturn: true,
+        status: true,
+        startDate: true,
+        endDate: true,
+        lastRoiAt: true,
+        plan: { select: { name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.referral.count({
+      where: { referrerId: userId, level: 1 },
+    }),
+  ]);
+
+  return {
+    investments: serialize(
+      investments.map((inv) => ({
+        ...inv,
+        planName: inv.plan?.name,
+      }))
+    ),
+    referralCount,
+  };
+});
+
 /** Fresh wallet balance (use on money pages). */
 export const getUserBalance = cache(async (userId) => {
   const user = await prisma.user.findUnique({
