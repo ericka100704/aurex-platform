@@ -1,6 +1,5 @@
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
-import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { serialize, toNumber } from "@/lib/serialize";
 import { getSettingsMap } from "@/lib/settings";
@@ -163,13 +162,16 @@ async function loadDepositList(where, { take } = {}) {
 
   if (rows.length === 0) return mapDepositRows([]);
 
+  // Use Prisma (not raw SQL) so column names match the DB schema
+  // (`proofImageUrl`), and avoid loading large proof URL payloads.
   const ids = rows.map((r) => r.id);
-  const proofRows = await prisma.$queryRaw`
-    SELECT id FROM deposits
-    WHERE id IN (${Prisma.join(ids)})
-      AND proof_image_url IS NOT NULL
-      AND proof_image_url <> ''
-  `;
+  const proofRows = await prisma.deposit.findMany({
+    where: {
+      id: { in: ids },
+      AND: [{ proofImageUrl: { not: null } }, { NOT: { proofImageUrl: "" } }],
+    },
+    select: { id: true },
+  });
   const proofIds = proofRows.map((r) => r.id);
   return mapDepositRows(rows, proofIds);
 }
