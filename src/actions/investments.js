@@ -3,7 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
-import { calcDailyReturn, calcTotalExpected } from "@/lib/business";
+import {
+  calcDailyReturn,
+  calcTotalExpected,
+  manilaMaturityEndDate,
+} from "@/lib/business";
 import { serialize, toNumber } from "@/lib/serialize";
 import { createNotification, formatCurrency } from "@/lib/notifications";
 import { adjustWallet } from "@/lib/ledger";
@@ -39,8 +43,7 @@ export async function investAction({ planId, amount }) {
 
       const dailyReturn = calcDailyReturn(investAmount, plan.dailyReturnPct);
       const totalExpected = calcTotalExpected(investAmount, plan.totalReturnPct);
-      const endDate = new Date();
-      endDate.setDate(endDate.getDate() + plan.durationDays);
+      const endDate = manilaMaturityEndDate(plan.durationDays);
 
       const created = await tx.investment.create({
         data: {

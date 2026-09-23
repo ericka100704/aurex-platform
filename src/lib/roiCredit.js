@@ -101,15 +101,29 @@ async function creditOneInvestment(investment, now) {
             : `${planName} daily ROI`,
       });
     }
+    let principalCredited = 0;
     if (next.shouldComplete && next.principal > 0) {
-      await adjustWallet(tx, {
-        userId: fresh.userId,
-        type: "PRINCIPAL",
-        amount: next.principal,
-        refType: "investment",
-        refId: fresh.id,
-        note: `${planName} principal returned`,
+      // Idempotent: never return principal twice for the same investment.
+      const alreadyReturned = await tx.walletLedger.findFirst({
+        where: {
+          userId: fresh.userId,
+          type: "PRINCIPAL",
+          refType: "investment",
+          refId: fresh.id,
+        },
+        select: { id: true },
       });
+      if (!alreadyReturned) {
+        await adjustWallet(tx, {
+          userId: fresh.userId,
+          type: "PRINCIPAL",
+          amount: next.principal,
+          refType: "investment",
+          refId: fresh.id,
+          note: `${planName} principal returned`,
+        });
+        principalCredited = next.principal;
+      }
     }
     if (next.profitToCredit > 0 && !next.shouldComplete) {
       await createNotification(
@@ -130,7 +144,11 @@ async function creditOneInvestment(investment, now) {
       if (next.profitToCredit > 0) {
         parts.push(`${formatCurrency(next.profitToCredit)} ROI`);
       }
-      parts.push(`${formatCurrency(next.principal)} principal returned`);
+      if (principalCredited > 0) {
+        parts.push(`${formatCurrency(principalCredited)} principal returned`);
+      } else if (next.principal > 0) {
+        parts.push("principal already returned");
+      }
       await createNotification(
         {
           userId: fresh.userId,
@@ -143,7 +161,7 @@ async function creditOneInvestment(investment, now) {
       );
     }
 
-    return next;
+    return { ...next, principalCredited };
   });
 
   if (!applied) {
@@ -156,7 +174,7 @@ async function creditOneInvestment(investment, now) {
     credited: applied.profitToCredit > 0,
     completed: applied.shouldComplete,
     profit: applied.profitToCredit,
-    principal: applied.principal,
+    principal: applied.principalCredited ?? applied.principal,
     daysDue: applied.daysDue,
   };
 }
@@ -169,9 +187,12 @@ export function revalidateRoiPaths() {
   revalidatePath("/admin/settings");
 }
 
-export async function runDailyRoiCredit(now = new Date()) {
+export async function runDailyRoiCredit(now = new Date(), { userId } = {}) {
   const investments = await prisma.investment.findMany({
-    where: { status: "ACTIVE" },
+    where: {
+      status: "ACTIVE",
+      ...(userId ? { userId } : {}),
+    },
     include: { plan: { select: { name: true } } },
     orderBy: { createdAt: "asc" },
   });
@@ -200,7 +221,7 @@ export async function runDailyRoiCredit(now = new Date()) {
       if (result.completed) {
         summary.completed += 1;
         summary.principalReturned = money(
-          summary.principalReturned + result.principal
+          summary.principalReturned + (result.principal || 0)
         );
       }
     } catch (error) {
@@ -216,7 +237,7 @@ export async function runDailyRoiCredit(now = new Date()) {
 }
 
 /** In-flight + DB gate so serverless navigations stay fast. */
-let ensurePromise = null;
+const ensurePromises = new Map();
 const GATE_KEY = "roi_ensure_gate";
 const GATE_TTL_MS = 60_000;
 
@@ -225,20 +246,33 @@ function manilaDayStart(now = new Date()) {
   return new Date(`${key}T00:00:00+08:00`);
 }
 
-async function readEnsureGate() {
-  const row = await prisma.systemSetting.findUnique({ where: { key: GATE_KEY } });
+/** Inclusive end of the current Manila calendar day. */
+function manilaDayEnd(now = new Date()) {
+  const key = zonedDateKey(now, TZ);
+  return new Date(`${key}T23:59:59.999+08:00`);
+}
+
+function gateKeyFor(userId) {
+  return userId ? `roi_ensure_u:${userId}` : GATE_KEY;
+}
+
+async function readEnsureGate(userId) {
+  const row = await prisma.systemSetting.findUnique({
+    where: { key: gateKeyFor(userId) },
+  });
   const last = Number(row?.value);
   return Number.isFinite(last) ? last : 0;
 }
 
-async function touchEnsureGate() {
+async function touchEnsureGate(userId) {
+  const key = gateKeyFor(userId);
   const value = String(Date.now());
   await prisma.systemSetting.upsert({
-    where: { key: GATE_KEY },
+    where: { key },
     create: {
-      key: GATE_KEY,
+      key,
       value,
-      label: "ROI ensure gate",
+      label: userId ? "ROI ensure gate (user)" : "ROI ensure gate",
       group: "system",
     },
     update: { value },
@@ -246,47 +280,54 @@ async function touchEnsureGate() {
 }
 
 /**
- * Auto catch-up when cron is missed. Call only from money/investment loaders —
- * not from getCurrentUser/layout — so page-to-page navigation stays snappy.
- * Cheap probe + 60s cross-instance gate; concurrent callers share one in-flight run.
+ * Auto catch-up when cron is missed. Prefer passing userId from the logged-in
+ * session so only that user's plans are processed (keeps UI snappy).
+ * Probe first; only throttle after a successful check/run.
  */
-export async function ensureDailyRoiCredit(now = new Date()) {
-  if (ensurePromise) return ensurePromise;
+export async function ensureDailyRoiCredit(now = new Date(), { userId } = {}) {
+  const flightKey = userId || "__all__";
+  if (ensurePromises.has(flightKey)) return ensurePromises.get(flightKey);
 
-  ensurePromise = (async () => {
+  const work = (async () => {
     try {
-      const last = await readEnsureGate();
+      const last = await readEnsureGate(userId);
       if (Date.now() - last < GATE_TTL_MS) {
         return { ok: true, ran: false, reason: "throttled" };
       }
 
-      // Claim the gate early so parallel serverless requests skip the heavy path.
-      await touchEnsureGate();
-
       const dayStart = manilaDayStart(now);
+      // Use end-of-Manila-day so maturity-morning still finds plans whose
+      // stored endDate timestamp is later today (e.g. invested in the afternoon).
+      const dayEnd = manilaDayEnd(now);
       const dueProbe = await prisma.investment.findFirst({
         where: {
           status: "ACTIVE",
+          ...(userId ? { userId } : {}),
           OR: [
             { lastRoiAt: null, startDate: { lt: dayStart } },
             { lastRoiAt: { lt: dayStart } },
-            { endDate: { lte: now } },
+            { endDate: { lte: dayEnd } },
           ],
         },
         select: { id: true },
       });
 
       if (!dueProbe) {
+        await touchEnsureGate(userId);
         return { ok: true, ran: false, reason: "nothing_due" };
       }
 
-      const summary = await runDailyRoiCredit(now);
-      await touchEnsureGate();
+      const summary = await runDailyRoiCredit(now, { userId });
+      // Only throttle after a clean run so partial failures can retry soon.
+      if (!summary.errors?.length) {
+        await touchEnsureGate(userId);
+      }
       return { ok: true, ran: true, ...summary };
     } finally {
-      ensurePromise = null;
+      ensurePromises.delete(flightKey);
     }
   })();
 
-  return ensurePromise;
+  ensurePromises.set(flightKey, work);
+  return work;
 }

@@ -40,6 +40,16 @@ export function addDateKeyDays(key, days) {
   return `${utc.getUTCFullYear()}-${String(utc.getUTCMonth() + 1).padStart(2, "0")}-${String(utc.getUTCDate()).padStart(2, "0")}`;
 }
 
+/**
+ * Plan maturity instant: end of the Manila calendar day that is
+ * `durationDays` after today's Manila date (matches ROI day keys).
+ */
+export function manilaMaturityEndDate(durationDays, now = new Date()) {
+  const days = Math.max(0, Number(durationDays) || 0);
+  const endKey = addDateKeyDays(zonedDateKey(now, "Asia/Manila"), days);
+  return new Date(`${endKey}T23:59:59.999+08:00`);
+}
+
 function parseHHMM(value, fallbackMinutes) {
   if (!value || !String(value).includes(":")) return fallbackMinutes;
   const [h, m] = String(value).split(":").map(Number);

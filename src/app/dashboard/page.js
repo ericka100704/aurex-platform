@@ -5,14 +5,17 @@ import GlassCard from "@/components/ui/GlassCard";
 import RoiChart from "@/components/dashboard/RoiChart";
 import InvestmentTable from "@/components/dashboard/InvestmentTable";
 import { requireUser } from "@/lib/auth";
-import { getUserOverview } from "@/lib/queries";
+import { getUserBalance, getUserOverview } from "@/lib/queries";
 import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function UserDashboardPage() {
   const user = await requireUser();
-  const { investments, referralCount } = await getUserOverview(user.id);
+  const [{ investments, referralCount }, available] = await Promise.all([
+    getUserOverview(user.id),
+    getUserBalance(user.id),
+  ]);
 
   const active = investments.filter((i) => i.status === "ACTIVE");
   const locked = active.reduce((s, i) => s + Number(i.amount || 0), 0);
@@ -27,7 +30,7 @@ export default async function UserDashboardPage() {
         <StatCard
           href="/dashboard/wallet/available"
           label="Available Balance"
-          value={formatCurrency(user.balance)}
+          value={formatCurrency(available)}
           subtext="Ready to invest or withdraw"
           icon="wallet"
           accent="gold"
