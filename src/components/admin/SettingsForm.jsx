@@ -175,7 +175,13 @@ export default function SettingsForm({ initialSettings = {} }) {
           {roiPending ? "Running..." : "Run daily ROI now"}
         </button>
         {roiMessage ? (
-          <p className="mt-3 text-xs text-emerald-400">{roiMessage}</p>
+          <p
+            className={`mt-3 text-xs whitespace-pre-wrap break-words ${
+              /error/i.test(roiMessage) ? "text-rose-300" : "text-emerald-400"
+            }`}
+          >
+            {roiMessage}
+          </p>
         ) : null}
       </GlassCard>
     </div>

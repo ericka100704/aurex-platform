@@ -2,6 +2,8 @@ import SettingsForm from "@/components/admin/SettingsForm";
 import { getAppSettings } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
+/** Manual ROI catch-up can process many matured investments. */
+export const maxDuration = 300;
 
 export default async function AdminSettingsPage() {
   const settings = await getAppSettings();

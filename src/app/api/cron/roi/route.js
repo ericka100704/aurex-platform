@@ -3,7 +3,8 @@ import { runDailyRoiCredit } from "@/lib/roiCredit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = 60;
+// Catch-up across many ACTIVE investments can take several minutes on Neon.
+export const maxDuration = 300;
 
 function isAuthorized(request) {
   const secret = process.env.CRON_SECRET?.trim();

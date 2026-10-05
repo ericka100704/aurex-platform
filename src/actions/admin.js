@@ -169,6 +169,13 @@ export async function runRoiCreditAction() {
     }
     if (summary.errors.length) {
       parts.push(`${summary.errors.length} error${summary.errors.length === 1 ? "" : "s"}`);
+      const sample = summary.errors
+        .slice(0, 3)
+        .map((e) => e.message)
+        .filter(Boolean);
+      if (sample.length) {
+        parts.push(`e.g. ${sample.join(" | ")}`);
+      }
     }
     return {
       ok: summary.errors.length === 0,

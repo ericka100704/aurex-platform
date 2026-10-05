@@ -7,6 +7,9 @@ import { adjustWallet } from "@/lib/ledger";
 
 const TZ = "Asia/Manila";
 
+/** Neon + catch-up can exceed Prisma's default 5s interactive tx timeout. */
+const TX_OPTIONS = { maxWait: 15_000, timeout: 60_000 };
+
 function money(value) {
   return Number(toNumber(value).toFixed(2));
 }
@@ -66,6 +69,9 @@ async function creditOneInvestment(investment, now) {
     return { id: investment.id, skipped: true, credited: false, completed: false };
   }
 
+  const planName = investment.plan?.name || "your plan";
+
+  // Keep the transaction lean: wallet + investment only. Notifications after commit.
   const applied = await prisma.$transaction(async (tx) => {
     await tx.$queryRaw`
       SELECT id FROM investments WHERE id = ${investment.id} FOR UPDATE
@@ -87,7 +93,6 @@ async function creditOneInvestment(investment, now) {
       },
     });
 
-    const planName = investment.plan?.name || "your plan";
     if (next.profitToCredit > 0) {
       await adjustWallet(tx, {
         userId: fresh.userId,
@@ -101,9 +106,9 @@ async function creditOneInvestment(investment, now) {
             : `${planName} daily ROI`,
       });
     }
+
     let principalCredited = 0;
     if (next.shouldComplete && next.principal > 0) {
-      // Idempotent: never return principal twice for the same investment.
       const alreadyReturned = await tx.walletLedger.findFirst({
         where: {
           userId: fresh.userId,
@@ -125,47 +130,54 @@ async function creditOneInvestment(investment, now) {
         principalCredited = next.principal;
       }
     }
-    if (next.profitToCredit > 0 && !next.shouldComplete) {
-      await createNotification(
-        {
-          userId: fresh.userId,
-          type: "roi",
-          title: "Daily ROI credited",
-          body: `${formatCurrency(next.profitToCredit)} from ${planName}${
-            next.daysDue > 1 ? ` (${next.daysDue} days)` : ""
-          }.`,
-          href: "/dashboard/wallet",
-        },
-        tx
-      );
-    }
-    if (next.shouldComplete) {
-      const parts = [];
-      if (next.profitToCredit > 0) {
-        parts.push(`${formatCurrency(next.profitToCredit)} ROI`);
-      }
-      if (principalCredited > 0) {
-        parts.push(`${formatCurrency(principalCredited)} principal returned`);
-      } else if (next.principal > 0) {
-        parts.push("principal already returned");
-      }
-      await createNotification(
-        {
-          userId: fresh.userId,
-          type: "investment",
-          title: `${planName} completed`,
-          body: `${parts.join(". ")}.`,
-          href: "/dashboard/plans",
-        },
-        tx
-      );
-    }
 
-    return { ...next, principalCredited };
-  });
+    return {
+      ...next,
+      principalCredited,
+      userId: fresh.userId,
+      planName,
+    };
+  }, TX_OPTIONS);
 
   if (!applied) {
     return { id: investment.id, skipped: true, credited: false, completed: false };
+  }
+
+  // Best-effort notifications — must not roll back wallet credits.
+  try {
+    if (applied.profitToCredit > 0 && !applied.shouldComplete) {
+      await createNotification({
+        userId: applied.userId,
+        type: "roi",
+        title: "Daily ROI credited",
+        body: `${formatCurrency(applied.profitToCredit)} from ${applied.planName}${
+          applied.daysDue > 1 ? ` (${applied.daysDue} days)` : ""
+        }.`,
+        href: "/dashboard/wallet",
+      });
+    }
+    if (applied.shouldComplete) {
+      const parts = [];
+      if (applied.profitToCredit > 0) {
+        parts.push(`${formatCurrency(applied.profitToCredit)} ROI`);
+      }
+      if (applied.principalCredited > 0) {
+        parts.push(
+          `${formatCurrency(applied.principalCredited)} principal returned`
+        );
+      } else if (applied.principal > 0) {
+        parts.push("principal already returned");
+      }
+      await createNotification({
+        userId: applied.userId,
+        type: "investment",
+        title: `${applied.planName} completed`,
+        body: `${parts.join(". ")}.`,
+        href: "/dashboard/plans",
+      });
+    }
+  } catch {
+    // ignore notification failures
   }
 
   return {
@@ -183,8 +195,10 @@ export function revalidateRoiPaths() {
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/plans");
   revalidatePath("/dashboard/wallet");
+  revalidatePath("/dashboard/investments");
   revalidatePath("/admin");
   revalidatePath("/admin/settings");
+  revalidatePath("/admin/investments");
 }
 
 export async function runDailyRoiCredit(now = new Date(), { userId } = {}) {
@@ -227,7 +241,7 @@ export async function runDailyRoiCredit(now = new Date(), { userId } = {}) {
     } catch (error) {
       summary.errors.push({
         id: investment.id,
-        message: error.message || "ROI credit failed",
+        message: error?.message || String(error) || "ROI credit failed",
       });
     }
   }
