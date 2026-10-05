@@ -1,4 +1,4 @@
-# Vercel env checklist (aurex.click)
+# Vercel env checklist (production domain)
 
 Paste values in **Vercel → Project → Settings → Environment Variables**.  
 Do **not** commit `.env`. Do **not** paste secrets into GitHub or chat.
@@ -13,8 +13,8 @@ Use **Production** (and Preview if you test preview URLs).
 
 Copy from local `.env` unless noted.
 
-- [ ] `NEXT_PUBLIC_APP_URL` = `https://www.aurex.click`
-- [ ] `NEXT_PUBLIC_APP_NAME` = `AUREX`
+- [ ] `NEXT_PUBLIC_APP_URL` = your live URL (e.g. `https://www.aurex.click` until DNS changes)
+- [ ] `NEXT_PUBLIC_APP_NAME` = `Solana`
 - [ ] `DATABASE_URL` — Supabase pooler (`:6543`, `?pgbouncer=true`)
 - [ ] `DIRECT_URL` — Supabase direct (`:5432`)
 - [ ] `JWT_SECRET` — long random; **not** `change-me-to-a-long-random-secret`
@@ -25,10 +25,10 @@ Copy from local `.env` unless noted.
 ## Optional
 
 - [ ] `RESEND_API_KEY` — without this, verify / forgot-password emails will not send on production
-- [ ] `MAIL_FROM` — e.g. `AUREX <noreply@aurex.click>` (domain must be verified in Resend)
+- [ ] `MAIL_FROM` — e.g. `Solana <noreply@yourdomain.com>` (domain must be verified in Resend)
 - [ ] `PAYMONGO_SECRET_KEY` — leave empty for manual receipt deposits
 - [ ] `PAYMONGO_WEBHOOK_SECRET` — only if PayMongo webhooks are enabled  
-  Webhook URL: `https://www.aurex.click/api/webhooks/paymongo`  
+  Webhook URL: `https://YOUR_DOMAIN/api/webhooks/paymongo`  
   Event: `checkout_session.payment.paid`
 
 ---
@@ -36,9 +36,9 @@ Copy from local `.env` unless noted.
 ## After save
 
 1. Redeploy Production.
-2. Hard-refresh https://www.aurex.click
-3. Smoke test: login, deposit receipt upload, profile photo, withdraw (GCash number), admin Investments.
-4. Confirm cron: Vercel **Settings → Crons** (Hobby may not run crons). ROI also auto catch-ups on any dashboard/admin page load when days are due.
+2. Hard-refresh the live site.
+3. Smoke test: login as `admin@solana.app`, deposit receipt upload, withdraw, admin Investments.
+4. Confirm cron: Vercel **Settings → Crons** (Hobby may not run crons). ROI also auto catch-ups after login.
 
 ## If something breaks
 

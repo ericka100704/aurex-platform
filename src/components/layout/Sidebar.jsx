@@ -67,20 +67,20 @@ export default function Sidebar({
           {variant === "user" ? (
             <div className="mt-auto space-y-1 border-t border-white/[0.06] pt-4">
               <a
-                href="mailto:support@aurex.app"
+                href="mailto:support@solana.app"
                 className="flex items-center gap-3 rounded-full px-4 py-2.5 text-sm text-white/45 transition-colors hover:bg-white/[0.04] hover:text-white/80"
               >
                 <LifeBuoy className="h-4 w-4" />
                 Support
               </a>
               <div className="mt-3 rounded-3xl border border-white/[0.06] bg-white/[0.03] p-3 text-xs text-white/45">
-                <p className="font-medium text-gold">AUREX</p>
+                <p className="font-medium text-gold">Solana</p>
                 <p className="mt-1">Trade · Grow · Succeed</p>
               </div>
             </div>
           ) : (
             <div className="mt-auto rounded-3xl border border-white/[0.06] bg-white/[0.03] p-3 text-xs text-white/45">
-              <p className="font-medium text-gold">AUREX Admin</p>
+              <p className="font-medium text-gold">Solana Admin</p>
               <p className="mt-1">Control plans, deposits, and users.</p>
             </div>
           )}

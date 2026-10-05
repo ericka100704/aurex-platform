@@ -5,44 +5,28 @@ const prisma = new PrismaClient();
 
 async function main() {
   const adminPassword = await bcrypt.hash("admin123", 10);
-  const userPassword = await bcrypt.hash("user123", 10);
 
   const admin = await prisma.user.upsert({
-    where: { email: "admin@aurex.app" },
+    where: { email: "admin@solana.app" },
     update: {
-      fullName: "AUREX Admin",
+      fullName: "Solana Admin",
       role: "ADMIN",
       status: "ACTIVE",
     },
     create: {
-      email: "admin@aurex.app",
+      email: "admin@solana.app",
       passwordHash: adminPassword,
-      fullName: "AUREX Admin",
+      fullName: "Solana Admin",
       role: "ADMIN",
-      referralCode: "AXADMIN",
+      referralCode: "SOLADMIN",
       balance: 0,
-    },
-  });
-
-  const demoUser = await prisma.user.upsert({
-    where: { email: "demo@aurex.app" },
-    update: {
-      fullName: "AUREX Demo",
-      status: "ACTIVE",
-    },
-    create: {
-      email: "demo@aurex.app",
-      passwordHash: userPassword,
-      fullName: "AUREX Demo",
-      role: "USER",
-      referralCode: "AXDEMO01",
-      balance: 5000,
+      emailVerifiedAt: new Date(),
     },
   });
 
   const planDefs = [
     {
-      name: "AUREX START",
+      name: "SOLANA START",
       description: "Beginner-Friendly Account",
       minAmount: 300,
       maxAmount: 2999,
@@ -53,7 +37,7 @@ async function main() {
       status: "ACTIVE",
     },
     {
-      name: "AUREX PRO",
+      name: "SOLANA PRO",
       description: "Advanced Trading Tools",
       minAmount: 3000,
       maxAmount: 5999,
@@ -64,7 +48,7 @@ async function main() {
       status: "ACTIVE",
     },
     {
-      name: "AUREX ELITE",
+      name: "SOLANA ELITE",
       description: "Premium Platform Features — 4% Daily",
       minAmount: 6000,
       maxAmount: 100000,
@@ -92,7 +76,8 @@ async function main() {
       accountName: "MABEL HULAR",
       accountNumber: "09242512818",
       qrImageUrl: "/qr/gcash.png",
-      instructions: "Scan the GCash QR or send the exact amount to 09242512818 (MABEL HULAR), then upload your receipt.",
+      instructions:
+        "Scan the GCash QR or send the exact amount to 09242512818 (MABEL HULAR), then upload your receipt.",
       sortOrder: 1,
       isActive: true,
     },
@@ -102,7 +87,8 @@ async function main() {
       accountName: "MABEL HULAR",
       accountNumber: "012774193734",
       qrImageUrl: "/qr/gotyme.png",
-      instructions: "Scan the GoTyme QR or transfer the exact amount to 012774193734 (MABEL HULAR), then upload your receipt.",
+      instructions:
+        "Scan the GoTyme QR or transfer the exact amount to 012774193734 (MABEL HULAR), then upload your receipt.",
       sortOrder: 2,
       isActive: true,
     },
@@ -120,17 +106,57 @@ async function main() {
   }
 
   const settings = [
-    { key: "site_name", value: "AUREX", label: "Site Name", group: "general" },
+    { key: "site_name", value: "Solana", label: "Site Name", group: "general" },
     { key: "is_kyc_required", value: "false", label: "KYC Required", group: "general" },
-    { key: "referral_direct_rate", value: "8", label: "Direct Referral Bonus %", group: "referral" },
-    { key: "referral_level_rate", value: "1", label: "Downline Level Commission %", group: "referral" },
-    { key: "referral_max_level", value: "4", label: "Max Referral Levels", group: "referral" },
+    {
+      key: "referral_direct_rate",
+      value: "8",
+      label: "Direct Referral Bonus %",
+      group: "referral",
+    },
+    {
+      key: "referral_level_rate",
+      value: "1",
+      label: "Downline Level Commission %",
+      group: "referral",
+    },
+    {
+      key: "referral_max_level",
+      value: "4",
+      label: "Max Referral Levels",
+      group: "referral",
+    },
     { key: "min_withdrawal", value: "500", label: "Minimum Withdrawal", group: "withdrawal" },
-    { key: "withdrawal_fee_pct", value: "0", label: "Withdrawal Fee %", group: "withdrawal" },
-    { key: "withdrawal_window_start", value: "06:00", label: "Withdrawal Window Start", group: "withdrawal" },
-    { key: "withdrawal_window_end", value: "16:00", label: "Withdrawal Window End", group: "withdrawal" },
-    { key: "withdrawal_release_time", value: "21:00", label: "Withdrawal Release Batch", group: "withdrawal" },
-    { key: "withdrawal_timezone", value: "Asia/Manila", label: "Business Timezone", group: "withdrawal" },
+    {
+      key: "withdrawal_fee_pct",
+      value: "0",
+      label: "Withdrawal Fee %",
+      group: "withdrawal",
+    },
+    {
+      key: "withdrawal_window_start",
+      value: "06:00",
+      label: "Withdrawal Window Start",
+      group: "withdrawal",
+    },
+    {
+      key: "withdrawal_window_end",
+      value: "16:00",
+      label: "Withdrawal Window End",
+      group: "withdrawal",
+    },
+    {
+      key: "withdrawal_release_time",
+      value: "21:00",
+      label: "Withdrawal Release Batch",
+      group: "withdrawal",
+    },
+    {
+      key: "withdrawal_timezone",
+      value: "Asia/Manila",
+      label: "Business Timezone",
+      group: "withdrawal",
+    },
   ];
 
   for (const setting of settings) {
@@ -141,9 +167,8 @@ async function main() {
     });
   }
 
-  console.log("AUREX seed complete:", {
+  console.log("Solana seed complete:", {
     admin: admin.email,
-    demoUser: demoUser.email,
   });
 }
 

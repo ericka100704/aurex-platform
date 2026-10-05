@@ -139,7 +139,7 @@ export default function SettingsForm({ initialSettings = {} }) {
           <label className="mb-1 block text-xs text-white/50">Site Name</label>
           <input
             className="input-luxury"
-            value={settings.site_name || "AUREX"}
+            value={settings.site_name || "Solana"}
             onChange={(e) => update("site_name", e.target.value)}
           />
         </div>

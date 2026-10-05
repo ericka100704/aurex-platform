@@ -267,7 +267,7 @@ export async function initiatePaymongoDepositAction({ methodId, amount }) {
       amount: pesos,
       depositId: deposit.id,
       methodType: method.type,
-      description: `AUREX deposit — ${user.email}`,
+      description: `Solana deposit — ${user.email}`,
       customer: user,
     });
     const checkoutUrl = session?.data?.attributes?.checkout_url;
@@ -410,7 +410,7 @@ export async function generateGcashAmountQrAction(amount, methodId) {
       });
 
   const payload = [
-    method?.name || "AUREX",
+    method?.name || "Solana",
     method?.accountName || "MABEL HULAR",
     method?.accountNumber || "",
     `PHP ${pesos.toFixed(2)}`,

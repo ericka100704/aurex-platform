@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { serialize } from "@/lib/serialize";
 import { getJwtSecret } from "@/lib/jwtSecret";
 
-const COOKIE_NAME = "aurex_session";
+const COOKIE_NAME = "solana_session";
 
 function getSecret() {
   return new TextEncoder().encode(getJwtSecret());

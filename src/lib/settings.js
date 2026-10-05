@@ -2,7 +2,7 @@ import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 
 const DEFAULTS = {
-  site_name: "AUREX",
+  site_name: "Solana",
   is_kyc_required: "false",
   referral_direct_rate: "8",
   referral_level_rate: "1",

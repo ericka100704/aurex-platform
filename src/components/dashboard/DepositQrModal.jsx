@@ -201,7 +201,7 @@ export default function DepositQrModal({
                 ) : null}
                 <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 px-3.5 py-3">
                   <p className="text-[11px] text-white/40">Send to</p>
-                  <p className="text-sm text-white">{method?.accountName || "AUREX"}</p>
+                  <p className="text-sm text-white">{method?.accountName || "Solana"}</p>
                   <p className="font-medium tracking-wide text-gold">{method?.accountNumber}</p>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2">

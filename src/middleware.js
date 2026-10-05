@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { getJwtSecret } from "@/lib/jwtSecret";
 
-const COOKIE_NAME = "aurex_session";
+const COOKIE_NAME = "solana_session";
 
 function getSecret() {
   return new TextEncoder().encode(getJwtSecret());

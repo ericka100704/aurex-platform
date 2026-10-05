@@ -6,7 +6,7 @@ export function isMailConfigured() {
 
 async function sendEmail({ to, subject, text, html }) {
   const key = process.env.RESEND_API_KEY?.trim();
-  const from = process.env.MAIL_FROM?.trim() || "AUREX <noreply@aurix.click>";
+  const from = process.env.MAIL_FROM?.trim() || "Solana <noreply@aurix.click>";
 
   if (!key) {
     if (process.env.NODE_ENV !== "production") {
@@ -34,7 +34,7 @@ async function sendEmail({ to, subject, text, html }) {
       const raw = String(parsed?.message || parsed?.error || "");
       if (/own email|testing emails|only send/i.test(raw)) {
         message =
-          "Test sender can only email the Resend account address until aurex.click is verified.";
+          "Test sender can only email the Resend account address until your domain is verified.";
       } else if (raw) {
         message = raw;
       }
@@ -50,9 +50,9 @@ export async function sendVerifyEmail(to, rawToken) {
   const link = `${getAppUrl()}/verify-email?token=${rawToken}`;
   return sendEmail({
     to,
-    subject: "Verify your AUREX email",
-    text: `Confirm your AUREX account:\n${link}\n\nThis link expires in 24 hours.`,
-    html: `<p>Confirm your AUREX account:</p><p><a href="${link}">${link}</a></p><p>This link expires in 24 hours.</p>`,
+    subject: "Verify your Solana email",
+    text: `Confirm your Solana account:\n${link}\n\nThis link expires in 24 hours.`,
+    html: `<p>Confirm your Solana account:</p><p><a href="${link}">${link}</a></p><p>This link expires in 24 hours.</p>`,
   });
 }
 
@@ -60,8 +60,8 @@ export async function sendResetEmail(to, rawToken) {
   const link = `${getAppUrl()}/reset-password?token=${rawToken}`;
   return sendEmail({
     to,
-    subject: "Reset your AUREX password",
-    text: `Reset your AUREX password:\n${link}\n\nThis link expires in 1 hour. If you did not ask for this, ignore the email.`,
-    html: `<p>Reset your AUREX password:</p><p><a href="${link}">${link}</a></p><p>This link expires in 1 hour.</p>`,
+    subject: "Reset your Solana password",
+    text: `Reset your Solana password:\n${link}\n\nThis link expires in 1 hour. If you did not ask for this, ignore the email.`,
+    html: `<p>Reset your Solana password:</p><p><a href="${link}">${link}</a></p><p>This link expires in 1 hour.</p>`,
   });
 }

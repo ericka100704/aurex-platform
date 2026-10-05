@@ -68,7 +68,7 @@ export default async function UserDashboardPage() {
               <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-pink-glow text-white shadow-glow">
                 <Sparkles className="h-5 w-5" />
               </div>
-              <h3 className="font-display text-xl text-white">Grow with AUREX</h3>
+              <h3 className="font-display text-xl text-white">Grow with Solana</h3>
               <p className="mt-2 text-sm leading-relaxed text-white/45">
                 Deposit via GCash or GoTyme, pick a live plan, and earn referral
                 rewards on every deposit.

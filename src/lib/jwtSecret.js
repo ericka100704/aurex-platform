@@ -1,6 +1,6 @@
 const WEAK = new Set([
   "",
-  "dev-only-aurex-secret",
+  "dev-only-Solana-secret",
   "change-me-to-a-long-random-secret",
 ]);
 
@@ -9,5 +9,5 @@ export function getJwtSecret() {
   if (process.env.NODE_ENV === "production" && WEAK.has(secret)) {
     throw new Error("JWT_SECRET must be a strong unique value in production.");
   }
-  return secret || "dev-only-aurex-secret";
+  return secret || "dev-only-Solana-secret";
 }

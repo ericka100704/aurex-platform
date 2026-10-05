@@ -19,15 +19,15 @@ export default function Logo({ href = "/", size = "md", showText = true }) {
   return (
     <Link href={href} className="group inline-flex items-center gap-2.5">
       <Image
-        src="/aurex-logo.png"
-        alt="AUREX"
+        src="/solana-logo.png"
+        alt="Solana"
         width={px}
         height={px}
         className="rounded-full object-cover shadow-gold"
       />
       {showText ? (
         <span className={`font-display tracking-[0.18em] ${textSizes[size]}`}>
-          <span className="shimmer-text">AUREX</span>
+          <span className="shimmer-text">Solana</span>
         </span>
       ) : null}
     </Link>

@@ -1,4 +1,4 @@
-# AUREX
+# Solana
 
 Luxury Online Investment Platform scaffold built with **Next.js (App Router, JavaScript)**, **Tailwind CSS**, **Framer Motion**, and **PostgreSQL via Prisma**.
 
@@ -43,10 +43,10 @@ Open [http://localhost:3000](http://localhost:3000)
 
 | Role | Email | Password |
 |------|-------|----------|
-| Admin | `admin@aurex.app` | `admin123` |
-| User | `demo@aurex.app` | `user123` |
+| Admin | `admin@solana.app` | `admin123` |
 
 > Auth, dashboards, deposits, investments, withdrawals, and admin CRUD are wired to Prisma/Supabase.
+> Plans: SOLANA START / PRO / ELITE.
 
 ## Folder Structure
 
@@ -87,9 +87,9 @@ Online Investment Platform/
 
 | Plan | Duration | Min Deposit | Return |
 |------|----------|-------------|--------|
-| AUREX START | 8 days | ₱300 | 25% total |
-| AUREX PRO | 15 days | ₱3,000 | 50% total |
-| AUREX ELITE | 25 days | ₱6,000 | 4% daily |
+| SOLANA START | 8 days | ₱300 | 25% total |
+| SOLANA PRO | 15 days | ₱3,000 | 50% total |
+| SOLANA ELITE | 25 days | ₱6,000 | 4% daily |
 
 ## API Stubs
 

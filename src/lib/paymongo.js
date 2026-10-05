@@ -64,12 +64,12 @@ export async function createCheckoutSession({
         send_email_receipt: false,
         show_description: true,
         show_line_items: true,
-        description: description || "AUREX wallet deposit",
+        description: description || "Solana wallet deposit",
         line_items: [
           {
             currency: "PHP",
             amount: centavos,
-            name: "AUREX Deposit",
+            name: "Solana Deposit",
             quantity: 1,
             description: `Wallet deposit ${depositId}`,
           },
