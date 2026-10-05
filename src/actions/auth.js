@@ -111,7 +111,7 @@ export async function registerAction(formData) {
   await createNotification({
     userId: user.id,
     type: "account",
-    title: "Welcome to Solana",
+    title: "Welcome to SOLANA",
     body: "Your account is ready. Verify your email, then deposit to start a plan.",
     href: "/dashboard",
   });

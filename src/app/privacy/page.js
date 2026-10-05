@@ -1,15 +1,15 @@
 import LegalLayout from "@/components/legal/LegalLayout";
 
 export const metadata = {
-  title: "Privacy Policy · Solana",
-  description: "How Solana collects, uses, and stores personal data.",
+  title: "Privacy Policy · SOLANA",
+  description: "How SOLANA collects, uses, and stores personal data.",
 };
 
 export default function PrivacyPage() {
   return (
     <LegalLayout title="Privacy Policy" updated="14 August 2026">
       <p>
-        This policy explains how Solana collects and uses personal data when you
+        This policy explains how SOLANA collects and uses personal data when you
         use our website and dashboard. We process data to operate the Platform,
         process payments, prevent fraud, and comply with law.
       </p>
@@ -65,7 +65,7 @@ export default function PrivacyPage() {
       <h2 className="font-display text-xl text-white">8. Contact</h2>
       <p>
         Privacy questions can be sent to the support channel published on
-        Solana. This policy is a Platform template and should be reviewed by
+        SOLANA. This policy is a Platform template and should be reviewed by
         counsel for your entity before relying on it for regulatory filings.
       </p>
     </LegalLayout>

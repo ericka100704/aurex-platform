@@ -6,7 +6,7 @@ export function isMailConfigured() {
 
 async function sendEmail({ to, subject, text, html }) {
   const key = process.env.RESEND_API_KEY?.trim();
-  const from = process.env.MAIL_FROM?.trim() || "Solana <noreply@aurix.click>";
+  const from = process.env.MAIL_FROM?.trim() || "SOLANA <noreply@aurix.click>";
 
   if (!key) {
     if (process.env.NODE_ENV !== "production") {
@@ -50,9 +50,9 @@ export async function sendVerifyEmail(to, rawToken) {
   const link = `${getAppUrl()}/verify-email?token=${rawToken}`;
   return sendEmail({
     to,
-    subject: "Verify your Solana email",
-    text: `Confirm your Solana account:\n${link}\n\nThis link expires in 24 hours.`,
-    html: `<p>Confirm your Solana account:</p><p><a href="${link}">${link}</a></p><p>This link expires in 24 hours.</p>`,
+    subject: "Verify your SOLANA email",
+    text: `Confirm your SOLANA account:\n${link}\n\nThis link expires in 24 hours.`,
+    html: `<p>Confirm your SOLANA account:</p><p><a href="${link}">${link}</a></p><p>This link expires in 24 hours.</p>`,
   });
 }
 
@@ -60,8 +60,8 @@ export async function sendResetEmail(to, rawToken) {
   const link = `${getAppUrl()}/reset-password?token=${rawToken}`;
   return sendEmail({
     to,
-    subject: "Reset your Solana password",
-    text: `Reset your Solana password:\n${link}\n\nThis link expires in 1 hour. If you did not ask for this, ignore the email.`,
-    html: `<p>Reset your Solana password:</p><p><a href="${link}">${link}</a></p><p>This link expires in 1 hour.</p>`,
+    subject: "Reset your SOLANA password",
+    text: `Reset your SOLANA password:\n${link}\n\nThis link expires in 1 hour. If you did not ask for this, ignore the email.`,
+    html: `<p>Reset your SOLANA password:</p><p><a href="${link}">${link}</a></p><p>This link expires in 1 hour.</p>`,
   });
 }

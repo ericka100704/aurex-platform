@@ -1,24 +1,24 @@
 import LegalLayout from "@/components/legal/LegalLayout";
 
 export const metadata = {
-  title: "Terms of Use · Solana",
-  description: "Terms of use for the Solana investment platform.",
+  title: "Terms of Use · SOLANA",
+  description: "Terms of use for the SOLANA investment platform.",
 };
 
 export default function TermsPage() {
   return (
     <LegalLayout title="Terms of Use" updated="14 August 2026">
       <p>
-        These Terms govern your use of the Solana website and dashboard
-        (the &quot;Platform&quot;). By creating an account or using Solana, you agree to
+        These Terms govern your use of the SOLANA website and dashboard
+        (the &quot;Platform&quot;). By creating an account or using SOLANA, you agree to
         these Terms, our Privacy Policy, and the Risk Disclosure.
       </p>
       <h2 className="font-display text-xl text-white">1. The Platform</h2>
       <p>
-        Solana is an online platform where registered users may deposit funds via
+        SOLANA is an online platform where registered users may deposit funds via
         supported Philippine e-wallets (including GCash, Maya, and GoTyme),
         allocate balances to time-based plans, earn referral commissions where
-        enabled, and request withdrawals subject to Platform rules. Solana is
+        enabled, and request withdrawals subject to Platform rules. SOLANA is
         not a bank. Access may be limited, suspended, or terminated at our
         discretion for risk, compliance, or abuse.
       </p>
@@ -63,13 +63,13 @@ export default function TermsPage() {
       </p>
       <h2 className="font-display text-xl text-white">7. Prohibited use</h2>
       <p>
-        You may not use Solana for fraud, money laundering, unauthorized access,
+        You may not use SOLANA for fraud, money laundering, unauthorized access,
         or any illegal activity under Philippine law. We may cooperate with
         payment partners and authorities.
       </p>
       <h2 className="font-display text-xl text-white">8. Limitation of liability</h2>
       <p>
-        To the fullest extent allowed by law, Solana and its operators are not
+        To the fullest extent allowed by law, SOLANA and its operators are not
         liable for lost profits, lost data, payment-provider outages, or delays
         in admin review. The Platform is provided &quot;as is.&quot;
       </p>
@@ -81,7 +81,7 @@ export default function TermsPage() {
       </p>
       <h2 className="font-display text-xl text-white">10. Contact</h2>
       <p>
-        Use the support email shown on your Solana account or the contact
+        Use the support email shown on your SOLANA account or the contact
         details published on the Platform. These Terms are a Platform template
         and are not a substitute for advice from a Philippine lawyer.
       </p>

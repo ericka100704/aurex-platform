@@ -27,7 +27,7 @@ export default function RegisterForm({ referralCode = "" }) {
     <div className="glass-card w-full max-w-md p-8">
       <Logo />
       <h1 className="mt-6 font-display text-3xl text-white">Create account</h1>
-      <p className="mt-1 text-sm text-white/45">Join Solana</p>
+      <p className="mt-1 text-sm text-white/45">Join SOLANA</p>
       <form onSubmit={onSubmit} className="mt-6 space-y-3">
         <input className="input-luxury" name="fullName" placeholder="Full name" required />
         <input className="input-luxury" type="email" name="email" placeholder="Email" required />

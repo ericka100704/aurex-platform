@@ -20,14 +20,14 @@ export default function Logo({ href = "/", size = "md", showText = true }) {
     <Link href={href} className="group inline-flex items-center gap-2.5">
       <Image
         src="/solana-logo.png"
-        alt="Solana"
+        alt="SOLANA"
         width={px}
         height={px}
         className="rounded-full object-cover shadow-gold"
       />
       {showText ? (
         <span className={`font-display tracking-[0.18em] ${textSizes[size]}`}>
-          <span className="shimmer-text">Solana</span>
+          <span className="shimmer-text">SOLANA</span>
         </span>
       ) : null}
     </Link>

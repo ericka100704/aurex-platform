@@ -1,4 +1,4 @@
-# Solana
+# SOLANA
 
 Luxury Online Investment Platform scaffold built with **Next.js (App Router, JavaScript)**, **Tailwind CSS**, **Framer Motion**, and **PostgreSQL via Prisma**.
 

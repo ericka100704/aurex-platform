@@ -74,13 +74,13 @@ export default function Sidebar({
                 Support
               </a>
               <div className="mt-3 rounded-3xl border border-white/[0.06] bg-white/[0.03] p-3 text-xs text-white/45">
-                <p className="font-medium text-gold">Solana</p>
+                <p className="font-medium text-gold">SOLANA</p>
                 <p className="mt-1">Trade · Grow · Succeed</p>
               </div>
             </div>
           ) : (
             <div className="mt-auto rounded-3xl border border-white/[0.06] bg-white/[0.03] p-3 text-xs text-white/45">
-              <p className="font-medium text-gold">Solana Admin</p>
+              <p className="font-medium text-gold">SOLANA Admin</p>
               <p className="mt-1">Control plans, deposits, and users.</p>
             </div>
           )}

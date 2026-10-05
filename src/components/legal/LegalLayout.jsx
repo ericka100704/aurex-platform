@@ -43,7 +43,7 @@ export default function LegalLayout({ title, updated, children }) {
           {children}
         </div>
         <footer className="mt-12 border-t border-white/10 pt-6 text-center text-[11px] text-white/35">
-          <p>© {new Date().getFullYear()} Solana</p>
+          <p>© {new Date().getFullYear()} SOLANA</p>
           <LegalFooter />
         </footer>
       </div>

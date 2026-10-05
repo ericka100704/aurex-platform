@@ -23,8 +23,8 @@ const sans = Manrope({
 });
 
 export const metadata = {
-  title: "Solana",
-  description: "Solana — trade, grow, succeed. Luxury online investment platform.",
+  title: "SOLANA",
+  description: "SOLANA — trade, grow, succeed. Luxury online investment platform.",
   icons: {
     icon: [{ url: "/solana-logo.png", type: "image/png" }],
     apple: [{ url: "/solana-logo.png", type: "image/png" }],

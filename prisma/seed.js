@@ -9,14 +9,14 @@ async function main() {
   const admin = await prisma.user.upsert({
     where: { email: "admin@solana.app" },
     update: {
-      fullName: "Solana Admin",
+      fullName: "SOLANA Admin",
       role: "ADMIN",
       status: "ACTIVE",
     },
     create: {
       email: "admin@solana.app",
       passwordHash: adminPassword,
-      fullName: "Solana Admin",
+      fullName: "SOLANA Admin",
       role: "ADMIN",
       referralCode: "SOLADMIN",
       balance: 0,
@@ -106,7 +106,7 @@ async function main() {
   }
 
   const settings = [
-    { key: "site_name", value: "Solana", label: "Site Name", group: "general" },
+    { key: "site_name", value: "SOLANA", label: "Site Name", group: "general" },
     { key: "is_kyc_required", value: "false", label: "KYC Required", group: "general" },
     {
       key: "referral_direct_rate",
@@ -167,7 +167,7 @@ async function main() {
     });
   }
 
-  console.log("Solana seed complete:", {
+  console.log("SOLANA seed complete:", {
     admin: admin.email,
   });
 }

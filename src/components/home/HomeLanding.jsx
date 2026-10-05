@@ -134,7 +134,7 @@ export default function HomeLanding({ plans = [], rewards }) {
           </div>
 
           <h1 className="brand-title font-brand text-5xl sm:text-6xl md:text-8xl">
-            Solana
+            SOLANA
           </h1>
 
           <p className="mt-5 max-w-xl text-sm text-white/60 md:text-base">
@@ -147,7 +147,7 @@ export default function HomeLanding({ plans = [], rewards }) {
               href="/register"
               className="rounded-full bg-gold-gradient px-7 py-3 text-center text-sm font-semibold text-dark shadow-[0_8px_28px_rgba(212,175,55,0.45)] md:text-base"
             >
-              Join Solana Today
+              Join SOLANA Today
             </Link>
             <Link
               href="/login"
@@ -306,13 +306,13 @@ export default function HomeLanding({ plans = [], rewards }) {
               href="/register"
               className="rounded-full bg-gold-gradient px-8 py-3 text-sm font-semibold text-dark shadow-gold"
             >
-              Start Earning with Solana
+              Start Earning with SOLANA
             </Link>
           </div>
         </section>
 
         <footer className="mt-8 border-t border-white/10 pt-8 text-center text-[11px] text-white/35">
-          <p>© {new Date().getFullYear()} Solana · Trade · Grow · Succeed</p>
+          <p>© {new Date().getFullYear()} SOLANA · Trade · Grow · Succeed</p>
           <p className="mt-2">
             Trading and investing involve risk. Invest responsibly.
           </p>

@@ -14,7 +14,7 @@ Use **Production** (and Preview if you test preview URLs).
 Copy from local `.env` unless noted.
 
 - [ ] `NEXT_PUBLIC_APP_URL` = your live URL (e.g. `https://www.aurex.click` until DNS changes)
-- [ ] `NEXT_PUBLIC_APP_NAME` = `Solana`
+- [ ] `NEXT_PUBLIC_APP_NAME` = `SOLANA`
 - [ ] `DATABASE_URL` — Supabase pooler (`:6543`, `?pgbouncer=true`)
 - [ ] `DIRECT_URL` — Supabase direct (`:5432`)
 - [ ] `JWT_SECRET` — long random; **not** `change-me-to-a-long-random-secret`
@@ -25,7 +25,7 @@ Copy from local `.env` unless noted.
 ## Optional
 
 - [ ] `RESEND_API_KEY` — without this, verify / forgot-password emails will not send on production
-- [ ] `MAIL_FROM` — e.g. `Solana <noreply@yourdomain.com>` (domain must be verified in Resend)
+- [ ] `MAIL_FROM` — e.g. `SOLANA <noreply@yourdomain.com>` (domain must be verified in Resend)
 - [ ] `PAYMONGO_SECRET_KEY` — leave empty for manual receipt deposits
 - [ ] `PAYMONGO_WEBHOOK_SECRET` — only if PayMongo webhooks are enabled  
   Webhook URL: `https://YOUR_DOMAIN/api/webhooks/paymongo`  

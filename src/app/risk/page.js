@@ -1,17 +1,17 @@
 import LegalLayout from "@/components/legal/LegalLayout";
 
 export const metadata = {
-  title: "Risk Disclosure · Solana",
-  description: "Risks of using Solana plans, deposits, and withdrawals.",
+  title: "Risk Disclosure · SOLANA",
+  description: "Risks of using SOLANA plans, deposits, and withdrawals.",
 };
 
 export default function RiskPage() {
   return (
     <LegalLayout title="Risk Disclosure" updated="14 August 2026">
       <p>
-        Using Solana involves significant risk. You can lose money. Do not
+        Using SOLANA involves significant risk. You can lose money. Do not
         deposit funds you cannot afford to lose. This is not investment,
-        tax, or legal advice. Solana is not the Bangko Sentral ng Pilipinas
+        tax, or legal advice. SOLANA is not the Bangko Sentral ng Pilipinas
         and is not a substitute for a licensed bank, broker, or investment
         house unless we separately hold and disclose such a license.
       </p>
@@ -51,7 +51,7 @@ export default function RiskPage() {
       </p>
       <h2 className="font-display text-xl text-white">6. Your responsibility</h2>
       <p>
-        You decide whether Solana is appropriate for you. Read the Terms and
+        You decide whether SOLANA is appropriate for you. Read the Terms and
         Privacy Policy. If you do not understand or accept these risks, do
         not create an account or deposit funds.
       </p>
