@@ -2,18 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 
 const iconSizes = {
-  sm: 28,
-  md: 36,
-  lg: 48,
+  sm: 40,
+  md: 52,
+  lg: 72,
 };
 
-const textSizes = {
-  sm: "text-lg",
-  md: "text-xl",
-  lg: "text-3xl",
-};
-
-export default function Logo({ href = "/", size = "md", showText = true }) {
+export default function Logo({ href = "/", size = "md", showText = false }) {
   const px = iconSizes[size] || iconSizes.md;
 
   return (
@@ -23,10 +17,11 @@ export default function Logo({ href = "/", size = "md", showText = true }) {
         alt="SOLANA"
         width={px}
         height={px}
-        className="rounded-full object-cover shadow-gold"
+        priority
+        className="rounded-full object-cover shadow-gold ring-1 ring-gold/30"
       />
       {showText ? (
-        <span className={`font-display tracking-[0.18em] ${textSizes[size]}`}>
+        <span className="font-display tracking-[0.18em] text-xl">
           <span className="shimmer-text">SOLANA</span>
         </span>
       ) : null}
