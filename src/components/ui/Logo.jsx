@@ -21,7 +21,11 @@ export default function Logo({ href = "/", size = "md", showText = false }) {
         className="rounded-full object-cover shadow-gold ring-1 ring-gold/30"
       />
       {showText ? (
-        <span className="font-display tracking-[0.18em] text-xl">
+        <span
+          className={`font-display tracking-[0.18em] ${
+            size === "sm" ? "text-lg" : size === "lg" ? "text-3xl" : "text-xl"
+          }`}
+        >
           <span className="shimmer-text">SOLANA</span>
         </span>
       ) : null}

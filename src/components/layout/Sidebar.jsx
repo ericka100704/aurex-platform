@@ -35,7 +35,7 @@ export default function Sidebar({
       >
         <div className="flex h-full flex-col px-5 py-7">
           <div className="px-2">
-            <Logo href={baseHref} />
+            <Logo href={baseHref} showText />
           </div>
 
           <nav className="mt-10 flex flex-1 flex-col gap-2.5">
