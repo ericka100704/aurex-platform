@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { serialize } from "@/lib/serialize";
 import { createNotification, formatCurrency } from "@/lib/notifications";
+import { revalidateAdminListTags } from "@/lib/adminCache";
 import { runDailyRoiCredit } from "@/lib/roiCredit";
 
 export async function updateUserAction({ id, status }) {
@@ -37,6 +38,7 @@ export async function updateUserAction({ id, status }) {
   revalidatePath("/admin");
   revalidatePath("/admin/users");
   revalidatePath("/dashboard");
+  revalidateAdminListTags("admin-users");
   return { ok: true, data: serialize(user), message: "Status updated." };
 }
 

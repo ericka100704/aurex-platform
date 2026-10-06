@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LifeBuoy } from "lucide-react";
 import Logo from "@/components/ui/Logo";
+import Spinner from "@/components/ui/Spinner";
 import { adminNav, userNav } from "@/constants/nav";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +17,11 @@ export default function Sidebar({
 }) {
   const pathname = usePathname();
   const items = variant === "admin" ? adminNav : userNav;
+  const [pendingHref, setPendingHref] = useState(null);
+
+  useEffect(() => {
+    setPendingHref(null);
+  }, [pathname]);
 
   return (
     <>
@@ -44,20 +51,31 @@ export default function Sidebar({
                 pathname === item.href ||
                 (item.href !== baseHref && pathname?.startsWith(item.href));
               const Icon = item.icon;
+              const pending = pendingHref === item.href;
 
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={onClose}
+                  prefetch
+                  onClick={() => {
+                    if (!active) setPendingHref(item.href);
+                    onClose?.();
+                  }}
                   className={cn(
-                    "relative flex items-center gap-3 rounded-full px-4 py-3 text-sm",
+                    "relative flex items-center gap-3 rounded-full px-4 py-3 text-sm transition-opacity",
                     active
                       ? "bg-nav-active text-white"
-                      : "text-white/50 hover:bg-white/[0.04] hover:text-white/85"
+                      : "text-white/50 hover:bg-white/[0.04] hover:text-white/85",
+                    pending ? "opacity-90" : ""
                   )}
+                  aria-busy={pending}
                 >
-                  {Icon ? <Icon className="h-4 w-4 shrink-0" /> : null}
+                  {pending ? (
+                    <Spinner className="h-4 w-4 shrink-0 text-gold" />
+                  ) : Icon ? (
+                    <Icon className="h-4 w-4 shrink-0" />
+                  ) : null}
                   {item.label}
                 </Link>
               );

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
+import { revalidateAdminListTags } from "@/lib/adminCache";
 import {
   calcDailyReturn,
   calcTotalExpected,
@@ -75,6 +76,8 @@ export async function investAction({ planId, amount }) {
     revalidatePath("/dashboard/plans");
     revalidatePath("/dashboard/wallet");
     revalidatePath("/admin");
+    revalidatePath("/admin/investments");
+    revalidateAdminListTags("admin-investments", "admin-metrics");
     await createNotification({
       userId: user.id,
       type: "investment",

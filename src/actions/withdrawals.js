@@ -9,6 +9,7 @@ import { serialize, toNumber } from "@/lib/serialize";
 import { createNotification, formatCurrency, notifyAdmins } from "@/lib/notifications";
 import { adjustWallet } from "@/lib/ledger";
 import { formatPayoutDestination, formatClockTime } from "@/lib/utils";
+import { revalidateAdminListTags } from "@/lib/adminCache";
 
 function normalizePayoutAccount(raw) {
   return String(raw || "").replace(/\D/g, "").trim();
@@ -172,6 +173,7 @@ export async function reviewWithdrawalAction({ id, action, adminNote }) {
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/wallet");
     revalidatePath("/dashboard/withdraw");
+    revalidateAdminListTags("admin-withdrawals", "admin-metrics", "admin-users");
     return { ok: true, message: `Withdrawal ${action.toLowerCase()}.` };
   } catch (e) {
     return { ok: false, message: e.message || "Review failed." };

@@ -4,6 +4,7 @@ import { addDateKeyDays, zonedDateKey } from "@/lib/business";
 import { toNumber } from "@/lib/serialize";
 import { createNotification, formatCurrency } from "@/lib/notifications";
 import { adjustWallet } from "@/lib/ledger";
+import { revalidateAdminListTags } from "@/lib/adminCache";
 
 const TZ = "Asia/Manila";
 
@@ -199,6 +200,7 @@ export function revalidateRoiPaths() {
   revalidatePath("/admin");
   revalidatePath("/admin/settings");
   revalidatePath("/admin/investments");
+  revalidateAdminListTags("admin-investments", "admin-metrics");
 }
 
 export async function runDailyRoiCredit(now = new Date(), { userId } = {}) {

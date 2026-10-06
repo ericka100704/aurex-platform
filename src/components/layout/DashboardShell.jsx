@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import RoiCatchUp from "./RoiCatchUp";
+import NavigationProgress from "./NavigationProgress";
 
 export default function DashboardShell({
   children,
@@ -27,6 +28,9 @@ export default function DashboardShell({
 
   return (
     <div className="dash-shell min-h-dvh overflow-x-hidden">
+      <Suspense fallback={null}>
+        <NavigationProgress />
+      </Suspense>
       <RoiCatchUp />
       <Sidebar
         variant={variant}

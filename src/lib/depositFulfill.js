@@ -4,6 +4,7 @@ import { payReferralCommissions } from "@/lib/business";
 import { toNumber } from "@/lib/serialize";
 import { createNotification, formatCurrency, notifyAdmins } from "@/lib/notifications";
 import { adjustWallet } from "@/lib/ledger";
+import { revalidateAdminListTags } from "@/lib/adminCache";
 
 export function revalidateWalletPaths() {
   revalidatePath("/dashboard");
@@ -13,6 +14,7 @@ export function revalidateWalletPaths() {
   revalidatePath("/admin");
   revalidatePath("/admin/deposits");
   revalidatePath("/admin/users");
+  revalidateAdminListTags("admin-deposits", "admin-metrics", "admin-users");
 }
 
 export async function fulfillPendingDeposit({
