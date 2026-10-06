@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { motion } from "framer-motion";
 import {
   ShieldCheck,
   Wallet,
@@ -78,6 +79,36 @@ const FEATURES = [
   },
 ];
 
+const ease = [0.22, 1, 0.36, 1];
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 32 },
+  show: { opacity: 1, y: 0 },
+};
+
+const stagger = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.12, delayChildren: 0.05 },
+  },
+};
+
+function Reveal({ children, className = "", delay = 0, as: Tag = motion.div, ...props }) {
+  return (
+    <Tag
+      className={className}
+      variants={fadeUp}
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, amount: 0.18, margin: "0px 0px -40px 0px" }}
+      transition={{ duration: 0.65, ease, delay }}
+      {...props}
+    >
+      {children}
+    </Tag>
+  );
+}
+
 export default function HomeLanding({ plans = [], rewards }) {
   const direct = rewards?.direct ?? 8;
   const level = rewards?.level ?? 1;
@@ -130,21 +161,42 @@ export default function HomeLanding({ plans = [], rewards }) {
       </header>
 
       <div className="relative z-10 mx-auto flex max-w-6xl flex-col overflow-x-hidden px-5 pb-16 pt-24 md:px-8 md:pt-28">
-        <section className="flex flex-col items-center px-2 pb-10 pt-8 text-center md:pt-12">
-          <div className="mb-6 inline-flex items-center rounded-full border border-gold/30 bg-black/40 px-4 py-1.5 text-xs text-gold/90">
+        <motion.section
+          className="flex min-h-[calc(100dvh-6.5rem)] flex-col items-center px-2 pb-20 pt-6 text-center"
+          variants={stagger}
+          initial="hidden"
+          animate="show"
+        >
+          <motion.div
+            variants={fadeUp}
+            transition={{ duration: 0.6, ease }}
+            className="mb-10 inline-flex items-center rounded-full border border-gold/30 bg-black/40 px-5 py-2 text-sm text-gold/90 md:mb-12 md:text-base"
+          >
             Trade · Grow · Succeed
-          </div>
+          </motion.div>
 
-          <h1 className="brand-title font-brand text-5xl sm:text-6xl md:text-8xl">
+          <motion.h1
+            variants={fadeUp}
+            transition={{ duration: 0.7, ease }}
+            className="brand-title text-6xl sm:text-7xl md:text-8xl lg:text-9xl"
+          >
             SOLANA
-          </h1>
+          </motion.h1>
 
-          <p className="mt-5 max-w-xl text-sm text-white/60 md:text-base">
+          <motion.p
+            variants={fadeUp}
+            transition={{ duration: 0.65, ease }}
+            className="mt-10 max-w-2xl text-base leading-relaxed text-white/65 sm:mt-12 sm:text-lg md:text-xl"
+          >
             Your partner in global markets — GCash & GoTyme deposits, live plans,
             referral rewards, and admin-controlled rules.
-          </p>
+          </motion.p>
 
-          <div className="mt-8 flex w-full max-w-md flex-col items-stretch justify-center gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center">
+          <motion.div
+            variants={fadeUp}
+            transition={{ duration: 0.65, ease }}
+            className="mt-12 flex w-full max-w-md flex-col items-stretch justify-center gap-3 sm:mt-14 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center"
+          >
             <Link
               href="/register"
               className="rounded-full bg-gold-gradient px-7 py-3 text-center text-sm font-semibold text-white shadow-[0_8px_28px_rgba(124,58,237,0.45)] md:text-base"
@@ -157,11 +209,11 @@ export default function HomeLanding({ plans = [], rewards }) {
             >
               Sign in
             </Link>
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
         <section id="plans" className="scroll-mt-28 py-14">
-          <div className="mb-8 text-center">
+          <Reveal className="mb-8 text-center">
             <p className="text-xs uppercase tracking-[0.28em] text-gold">Plans</p>
             <h2 className="mt-2 font-display text-3xl text-white md:text-4xl">
               Choose your growth path
@@ -170,16 +222,19 @@ export default function HomeLanding({ plans = [], rewards }) {
               Live plans from the platform — same duration, minimums, and returns as
               your dashboard.
             </p>
-          </div>
+          </Reveal>
           {plans.length === 0 ? (
-            <p className="text-center text-sm text-white/45">
-              No active plans yet. Check back soon.
-            </p>
+            <Reveal>
+              <p className="text-center text-sm text-white/45">
+                No active plans yet. Check back soon.
+              </p>
+            </Reveal>
           ) : (
             <div className="grid gap-4 md:grid-cols-3">
-              {plans.map((plan) => (
-                <div
+              {plans.map((plan, i) => (
+                <Reveal
                   key={plan.id}
+                  delay={i * 0.1}
                   className="rounded-2xl border border-gold/30 bg-black/45 p-5"
                   style={{
                     boxShadow: "inset 0 0 0 1px rgba(168,85,247,0.12)",
@@ -213,46 +268,48 @@ export default function HomeLanding({ plans = [], rewards }) {
                   >
                     Get Started
                   </Link>
-                </div>
+                </Reveal>
               ))}
             </div>
           )}
         </section>
 
         <section id="how" className="scroll-mt-28 py-14">
-          <div className="mb-8 text-center">
+          <Reveal className="mb-8 text-center">
             <p className="text-xs uppercase tracking-[0.28em] text-gold">How It Works</p>
             <h2 className="mt-2 font-display text-3xl text-white md:text-4xl">
               Simple path from deposit to earnings
             </h2>
-          </div>
+          </Reveal>
           <div className="grid gap-4 md:grid-cols-2">
-            {STEPS.map((item) => (
-              <div
+            {STEPS.map((item, i) => (
+              <Reveal
                 key={item.step}
+                delay={i * 0.08}
                 className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-left"
               >
-                <p className="font-brand text-sm tracking-[0.2em] text-rose">{item.step}</p>
+                <p className="text-sm font-semibold text-rose">{item.step}</p>
                 <h3 className="mt-2 font-display text-xl text-white">{item.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-white/55">{item.text}</p>
-              </div>
+              </Reveal>
             ))}
           </div>
         </section>
 
         <section id="features" className="scroll-mt-28 py-14">
-          <div className="mb-8 text-center">
+          <Reveal className="mb-8 text-center">
             <p className="text-xs uppercase tracking-[0.28em] text-gold">Features</p>
             <h2 className="mt-2 font-display text-3xl text-white md:text-4xl">
               Built for modern investors
             </h2>
-          </div>
+          </Reveal>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map((feature) => {
+            {FEATURES.map((feature, i) => {
               const Icon = feature.icon;
               return (
-                <div
+                <Reveal
                   key={feature.title}
+                  delay={i * 0.07}
                   className="rounded-2xl border border-gold/20 bg-black/40 p-5 text-left"
                 >
                   <div className="mb-3 inline-flex rounded-full border border-rose/35 bg-rose/10 p-2.5 text-rose">
@@ -260,14 +317,14 @@ export default function HomeLanding({ plans = [], rewards }) {
                   </div>
                   <h3 className="font-display text-lg text-white">{feature.title}</h3>
                   <p className="mt-2 text-sm text-white/55">{feature.text}</p>
-                </div>
+                </Reveal>
               );
             })}
           </div>
         </section>
 
         <section id="rewards" className="scroll-mt-28 py-14">
-          <div className="mb-8 text-center">
+          <Reveal className="mb-8 text-center">
             <p className="text-xs uppercase tracking-[0.28em] text-gold">Rewards</p>
             <h2 className="mt-2 font-display text-3xl text-white md:text-4xl">
               Earn when your network grows
@@ -276,17 +333,23 @@ export default function HomeLanding({ plans = [], rewards }) {
               Share your referral link and earn multi-level commissions when your
               downline deposits.
             </p>
-          </div>
+          </Reveal>
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-2xl border border-gold/30 bg-black/45 p-6 text-center">
+            <Reveal
+              delay={0}
+              className="rounded-2xl border border-gold/30 bg-black/45 p-6 text-center"
+            >
               <Users className="mx-auto h-8 w-8 text-gold" />
               <p className="mt-3 font-display text-3xl text-gold">
                 {formatPercent(direct).replace(".00", "")}
               </p>
               <p className="mt-1 text-sm text-white/70">Direct referral bonus</p>
               <p className="mt-2 text-xs text-white/40">Level 1 — your direct invites</p>
-            </div>
-            <div className="rounded-2xl border border-rose/30 bg-black/45 p-6 text-center">
+            </Reveal>
+            <Reveal
+              delay={0.1}
+              className="rounded-2xl border border-rose/30 bg-black/45 p-6 text-center"
+            >
               <BadgePercent className="mx-auto h-8 w-8 text-rose" />
               <p className="mt-3 font-display text-3xl text-rose">
                 {formatPercent(level).replace(".00", "")}
@@ -295,25 +358,31 @@ export default function HomeLanding({ plans = [], rewards }) {
               <p className="mt-2 text-xs text-white/40">
                 Levels 2 to {maxLevel}
               </p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-black/45 p-6 text-center">
+            </Reveal>
+            <Reveal
+              delay={0.2}
+              className="rounded-2xl border border-white/10 bg-black/45 p-6 text-center"
+            >
               <TrendingUp className="mx-auto h-8 w-8 text-gold" />
               <p className="mt-3 font-display text-3xl text-white">{maxLevel}</p>
               <p className="mt-1 text-sm text-white/70">Reward levels deep</p>
               <p className="mt-2 text-xs text-white/40">Paid from every deposit</p>
-            </div>
+            </Reveal>
           </div>
-          <div className="mt-8 text-center">
+          <Reveal className="mt-8 text-center" delay={0.15}>
             <Link
               href="/register"
               className="rounded-full bg-gold-gradient px-8 py-3 text-sm font-semibold text-white shadow-gold"
             >
               Start Earning with SOLANA
             </Link>
-          </div>
+          </Reveal>
         </section>
 
-        <footer className="mt-8 border-t border-white/10 pt-8 text-center text-[11px] text-white/35">
+        <Reveal
+          as={motion.footer}
+          className="mt-8 border-t border-white/10 pt-8 text-center text-[11px] text-white/35"
+        >
           <p>© {new Date().getFullYear()} SOLANA · Trade · Grow · Succeed</p>
           <p className="mt-2">
             Trading and investing involve risk. Invest responsibly.
@@ -329,7 +398,7 @@ export default function HomeLanding({ plans = [], rewards }) {
               Risk disclosure
             </Link>
           </p>
-        </footer>
+        </Reveal>
       </div>
     </div>
   );

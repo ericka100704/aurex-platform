@@ -1,30 +1,16 @@
-import { Cinzel, Cormorant_Garamond, Manrope } from "next/font/google";
+import { Manrope } from "next/font/google";
 import "./globals.css";
-
-const display = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["600", "700"],
-  variable: "--font-display",
-  display: "swap",
-});
-
-const brand = Cinzel({
-  subsets: ["latin"],
-  weight: ["700"],
-  variable: "--font-brand",
-  display: "swap",
-});
 
 const sans = Manrope({
   subsets: ["latin"],
-  weight: ["400", "600"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-sans",
   display: "swap",
 });
 
 export const metadata = {
   title: "SOLANA",
-  description: "SOLANA — trade, grow, succeed. Luxury online investment platform.",
+  description: "SOLANA — trade, grow, succeed. Online investment platform.",
   icons: {
     icon: [{ url: "/solana-logo.png", type: "image/png" }],
     apple: [{ url: "/solana-logo.png", type: "image/png" }],
@@ -40,11 +26,7 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body
-        className={`${display.variable} ${brand.variable} ${sans.variable} font-sans antialiased`}
-      >
-        {children}
-      </body>
+      <body className={`${sans.variable} font-sans antialiased`}>{children}</body>
     </html>
   );
 }

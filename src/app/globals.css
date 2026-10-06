@@ -165,10 +165,9 @@ body {
   }
 
   .brand-title {
-    font-weight: 800;
-    letter-spacing: 0.28em;
-    line-height: 1;
-    padding-left: 0.28em;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    line-height: 1.05;
     background: linear-gradient(105deg, #3c096c 0%, #bf00ff 35%, #8a2be2 70%, #c084fc 100%);
     -webkit-background-clip: text;
     background-clip: text;

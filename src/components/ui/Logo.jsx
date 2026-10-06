@@ -22,7 +22,7 @@ export default function Logo({ href = "/", size = "md", showText = false }) {
       />
       {showText ? (
         <span
-          className={`font-display tracking-[0.18em] ${
+          className={`font-sans tracking-wide ${
             size === "sm" ? "text-lg" : size === "lg" ? "text-3xl" : "text-xl"
           }`}
         >
