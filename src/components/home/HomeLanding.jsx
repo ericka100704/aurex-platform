@@ -82,14 +82,14 @@ const FEATURES = [
 const ease = [0.22, 1, 0.36, 1];
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 32 },
+  hidden: { opacity: 0, y: 24 },
   show: { opacity: 1, y: 0 },
 };
 
 const stagger = {
   hidden: {},
   show: {
-    transition: { staggerChildren: 0.12, delayChildren: 0.05 },
+    transition: { staggerChildren: 0.1, delayChildren: 0.04 },
   },
 };
 
@@ -100,8 +100,8 @@ function Reveal({ children, className = "", delay = 0, as: Tag = motion.div, ...
       variants={fadeUp}
       initial="hidden"
       whileInView="show"
-      viewport={{ once: true, amount: 0.18, margin: "0px 0px -40px 0px" }}
-      transition={{ duration: 0.65, ease, delay }}
+      viewport={{ once: true, amount: 0.12, margin: "0px 0px -24px 0px" }}
+      transition={{ duration: 0.5, ease, delay }}
       {...props}
     >
       {children}
@@ -129,8 +129,8 @@ export default function HomeLanding({ plans = [], rewards }) {
         <div className="absolute inset-0 bg-[#0d0d0d]/55" />
       </div>
 
-      <header className="fixed inset-x-0 top-0 z-50 px-5 pt-4 md:px-8">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 rounded-full border border-white/10 bg-[#121212]/92 px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-md md:px-6">
+      <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-5 sm:pt-4 md:px-8">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 rounded-full border border-white/10 bg-[#121212]/92 px-3 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-md sm:gap-4 sm:px-4 sm:py-3 md:px-6">
           <Logo size="sm" />
           <nav className="hidden items-center gap-6 lg:flex">
             {NAV.map((item) => (
@@ -143,16 +143,16 @@ export default function HomeLanding({ plans = [], rewards }) {
               </a>
             ))}
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <Link
               href="/login"
-              className="rounded-full border-2 border-rose px-4 py-2 text-sm font-medium text-gold shadow-[0_0_14px_rgba(168,85,247,0.28)] transition hover:bg-rose/10"
+              className="rounded-full border-2 border-rose px-3 py-1.5 text-xs font-medium text-gold shadow-[0_0_14px_rgba(168,85,247,0.28)] transition hover:bg-rose/10 sm:px-4 sm:py-2 sm:text-sm"
             >
               Sign in
             </Link>
             <Link
               href="/register"
-              className="rounded-full bg-gold-gradient px-4 py-2 text-sm font-semibold text-white shadow-gold"
+              className="rounded-full bg-gold-gradient px-3 py-1.5 text-xs font-semibold text-white shadow-gold sm:px-4 sm:py-2 sm:text-sm"
             >
               Start Now
             </Link>
@@ -160,33 +160,33 @@ export default function HomeLanding({ plans = [], rewards }) {
         </div>
       </header>
 
-      <div className="relative z-10 mx-auto flex max-w-6xl flex-col overflow-x-hidden px-5 pb-16 pt-24 md:px-8 md:pt-28">
+      <div className="relative z-10 mx-auto flex max-w-6xl flex-col overflow-x-hidden px-4 pb-12 pt-20 sm:px-5 sm:pb-16 sm:pt-24 md:px-8 md:pt-28">
         <motion.section
-          className="flex min-h-[calc(100dvh-6.5rem)] flex-col items-center px-2 pb-20 pt-6 text-center"
+          className="flex flex-col items-center px-1 pb-10 pt-2 text-center sm:px-2 sm:pb-14 sm:pt-4 md:min-h-[calc(100dvh-7rem)] md:pb-20 md:pt-6"
           variants={stagger}
           initial="hidden"
           animate="show"
         >
           <motion.div
             variants={fadeUp}
-            transition={{ duration: 0.6, ease }}
-            className="mb-10 inline-flex items-center rounded-full border border-gold/30 bg-black/40 px-5 py-2 text-sm text-gold/90 md:mb-12 md:text-base"
+            transition={{ duration: 0.45, ease }}
+            className="mb-5 inline-flex items-center rounded-full border border-gold/30 bg-black/40 px-4 py-1.5 text-xs text-gold/90 sm:mb-8 sm:px-5 sm:py-2 sm:text-sm md:mb-12 md:text-base"
           >
             Trade · Grow · Succeed
           </motion.div>
 
           <motion.h1
             variants={fadeUp}
-            transition={{ duration: 0.7, ease }}
-            className="brand-title text-6xl sm:text-7xl md:text-8xl lg:text-9xl"
+            transition={{ duration: 0.55, ease }}
+            className="brand-title text-[2.75rem] leading-none sm:text-6xl md:text-8xl lg:text-9xl"
           >
             SOLANA
           </motion.h1>
 
           <motion.p
             variants={fadeUp}
-            transition={{ duration: 0.65, ease }}
-            className="mt-10 max-w-2xl text-base leading-relaxed text-white/65 sm:mt-12 sm:text-lg md:text-xl"
+            transition={{ duration: 0.5, ease }}
+            className="mt-5 max-w-2xl text-sm leading-relaxed text-white/65 sm:mt-8 sm:text-base md:mt-12 md:text-xl"
           >
             Your partner in global markets — GCash & GoTyme deposits, live plans,
             referral rewards, and admin-controlled rules.
@@ -194,25 +194,25 @@ export default function HomeLanding({ plans = [], rewards }) {
 
           <motion.div
             variants={fadeUp}
-            transition={{ duration: 0.65, ease }}
-            className="mt-12 flex w-full max-w-md flex-col items-stretch justify-center gap-3 sm:mt-14 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center"
+            transition={{ duration: 0.5, ease }}
+            className="mt-7 flex w-full max-w-md flex-col items-stretch justify-center gap-2.5 sm:mt-10 sm:gap-3 md:mt-14 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center"
           >
             <Link
               href="/register"
-              className="rounded-full bg-gold-gradient px-7 py-3 text-center text-sm font-semibold text-white shadow-[0_8px_28px_rgba(124,58,237,0.45)] md:text-base"
+              className="rounded-full bg-gold-gradient px-6 py-2.5 text-center text-sm font-semibold text-white shadow-[0_8px_28px_rgba(124,58,237,0.45)] sm:px-7 sm:py-3 md:text-base"
             >
               Join SOLANA Today
             </Link>
             <Link
               href="/login"
-              className="rounded-full border-2 border-rose bg-black/30 px-7 py-3 text-center text-sm font-medium text-gold md:text-base"
+              className="rounded-full border-2 border-rose bg-black/30 px-6 py-2.5 text-center text-sm font-medium text-gold sm:px-7 sm:py-3 md:text-base"
             >
               Sign in
             </Link>
           </motion.div>
         </motion.section>
 
-        <section id="plans" className="scroll-mt-28 py-14">
+        <section id="plans" className="scroll-mt-24 py-10 sm:scroll-mt-28 sm:py-14">
           <Reveal className="mb-8 text-center">
             <p className="text-xs uppercase tracking-[0.28em] text-gold">Plans</p>
             <h2 className="mt-2 font-display text-3xl text-white md:text-4xl">
@@ -274,7 +274,7 @@ export default function HomeLanding({ plans = [], rewards }) {
           )}
         </section>
 
-        <section id="how" className="scroll-mt-28 py-14">
+        <section id="how" className="scroll-mt-24 py-10 sm:scroll-mt-28 sm:py-14">
           <Reveal className="mb-8 text-center">
             <p className="text-xs uppercase tracking-[0.28em] text-gold">How It Works</p>
             <h2 className="mt-2 font-display text-3xl text-white md:text-4xl">
@@ -296,7 +296,7 @@ export default function HomeLanding({ plans = [], rewards }) {
           </div>
         </section>
 
-        <section id="features" className="scroll-mt-28 py-14">
+        <section id="features" className="scroll-mt-24 py-10 sm:scroll-mt-28 sm:py-14">
           <Reveal className="mb-8 text-center">
             <p className="text-xs uppercase tracking-[0.28em] text-gold">Features</p>
             <h2 className="mt-2 font-display text-3xl text-white md:text-4xl">
@@ -323,7 +323,7 @@ export default function HomeLanding({ plans = [], rewards }) {
           </div>
         </section>
 
-        <section id="rewards" className="scroll-mt-28 py-14">
+        <section id="rewards" className="scroll-mt-24 py-10 sm:scroll-mt-28 sm:py-14">
           <Reveal className="mb-8 text-center">
             <p className="text-xs uppercase tracking-[0.28em] text-gold">Rewards</p>
             <h2 className="mt-2 font-display text-3xl text-white md:text-4xl">
