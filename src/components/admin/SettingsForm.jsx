@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import GlassCard from "@/components/ui/GlassCard";
+import Spinner from "@/components/ui/Spinner";
 import { runRoiCreditAction, updateSettingsAction } from "@/actions/admin";
 import { formatClockTime } from "@/lib/utils";
 
@@ -145,7 +146,14 @@ export default function SettingsForm({ initialSettings = {} }) {
         </div>
         <div className="md:col-span-3">
           <button type="submit" className="btn-rose" disabled={pending}>
-            {pending ? "Saving..." : "Save Settings"}
+            {pending ? (
+              <>
+                <Spinner className="h-4 w-4" />
+                Saving...
+              </>
+            ) : (
+              "Save Settings"
+            )}
           </button>
           {message ? <span className="ml-3 text-xs text-emerald-400">{message}</span> : null}
         </div>

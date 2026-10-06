@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import GlassCard from "@/components/ui/GlassCard";
+import Spinner from "@/components/ui/Spinner";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 import {
@@ -172,7 +173,16 @@ export default function PlansEditor({ initialPlans = [] }) {
           </div>
           <div className="flex gap-2">
             <button type="submit" className="btn-gold flex-1" disabled={pending}>
-              {pending ? "Saving..." : editingId ? "Update Plan" : "Create Plan"}
+              {pending ? (
+                <>
+                  <Spinner className="h-4 w-4" />
+                  Saving...
+                </>
+              ) : editingId ? (
+                "Update Plan"
+              ) : (
+                "Create Plan"
+              )}
             </button>
             {editingId ? (
               <button type="button" onClick={resetForm} className="btn-ghost">

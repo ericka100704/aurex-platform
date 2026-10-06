@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import GlassCard from "@/components/ui/GlassCard";
+import Spinner from "@/components/ui/Spinner";
 import DepositQrModal from "@/components/dashboard/DepositQrModal";
 import {
   getDepositPaymentStatusAction,
@@ -223,7 +224,14 @@ export default function DepositForm({ methods = [], onlinePayments = false }) {
           />
         </div>
         <button type="submit" className="btn-rose w-full" disabled={pending}>
-          {pending ? "Opening payment…" : "Submit Deposit"}
+          {pending ? (
+            <>
+              <Spinner className="h-4 w-4" />
+              Opening payment…
+            </>
+          ) : (
+            "Submit Deposit"
+          )}
         </button>
         {!payOpen && message ? <p className="text-center text-xs text-gold">{message}</p> : null}
       </form>

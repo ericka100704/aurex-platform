@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import GlassCard from "@/components/ui/GlassCard";
+import Spinner from "@/components/ui/Spinner";
 import { calcDailyReturn, formatCurrency, formatPercent } from "@/lib/utils";
 import { investAction } from "@/actions/investments";
 
@@ -72,7 +73,14 @@ export default function PlanCard({ plan, delay = 0, canInvest = true }) {
             onClick={handleInvest}
             className="btn-rose w-full disabled:opacity-60"
           >
-            {pending ? "Processing..." : "Invest Now"}
+            {pending ? (
+              <>
+                <Spinner className="h-4 w-4" />
+                Processing...
+              </>
+            ) : (
+              "Invest Now"
+            )}
           </button>
           {message ? (
             <p className="text-center text-xs text-gold">{message}</p>

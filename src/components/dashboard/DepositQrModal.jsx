@@ -91,7 +91,7 @@ export default function DepositQrModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="deposit-qr-title"
-        className="relative z-10 max-h-[min(92dvh,92vh)] w-full max-w-md overflow-y-auto rounded-[1.75rem] border border-white/10 bg-[#121212] p-5 shadow-[0_0_60px_rgba(255,105,180,0.18)] sm:p-6"
+        className="relative z-10 max-h-[min(92dvh,92vh)] w-full max-w-md overflow-y-auto rounded-[1.75rem] border border-white/10 bg-[#121212] p-5 shadow-[0_0_60px_rgba(168,85,247,0.18)] sm:p-6"
       >
         <div className="flex items-start justify-between gap-3">
           {paid || awaitingReview ? (
@@ -237,7 +237,14 @@ export default function DepositQrModal({
                     label="Receipt / Proof"
                   />
                   <button type="submit" className="btn-rose w-full" disabled={pending}>
-                    {pending ? "Submitting..." : "I've paid — submit for review"}
+                    {pending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      "I've paid — submit for review"
+                    )}
                   </button>
                 </form>
               </>

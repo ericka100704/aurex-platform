@@ -77,14 +77,14 @@ export default function RoiChart({ investments = [] }) {
             >
               <defs>
                 <linearGradient id="roiFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#FF69B4" stopOpacity="0.45" />
-                  <stop offset="55%" stopColor="#8A2BE2" stopOpacity="0.18" />
-                  <stop offset="100%" stopColor="#8A2BE2" stopOpacity="0" />
+                  <stop offset="0%" stopColor="#8A2BE2" stopOpacity="0.5" />
+                  <stop offset="55%" stopColor="#5A189A" stopOpacity="0.2" />
+                  <stop offset="100%" stopColor="#2E0854" stopOpacity="0" />
                 </linearGradient>
                 <linearGradient id="roiStroke" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#D4AF37" />
-                  <stop offset="55%" stopColor="#FF69B4" />
-                  <stop offset="100%" stopColor="#8A2BE2" />
+                  <stop offset="0%" stopColor="#BF00FF" />
+                  <stop offset="55%" stopColor="#8A2BE2" />
+                  <stop offset="100%" stopColor="#5A189A" />
                 </linearGradient>
               </defs>
               <path d={areaPath} fill="url(#roiFill)" />

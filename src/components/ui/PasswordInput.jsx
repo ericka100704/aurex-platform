@@ -3,27 +3,44 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
+const STATUS_CLASS = {
+  ok: "!border-emerald-400/70 !ring-2 !ring-emerald-400/30 focus:!border-emerald-400",
+  error: "!border-red-400/70 !ring-2 !ring-red-400/35 focus:!border-red-400",
+};
+
 export default function PasswordInput({
   name = "password",
   placeholder = "Password",
   required = true,
   minLength,
   defaultValue,
+  value,
+  onChange,
+  status,
   className = "",
+  autoComplete,
 }) {
   const [visible, setVisible] = useState(false);
+  const statusClass = status ? STATUS_CLASS[status] || "" : "";
+  const controlled = value !== undefined;
 
   return (
     <div className="relative">
       <input
-        className={`input-luxury pr-12 ${className}`}
+        className={`input-luxury pr-12 ${statusClass} ${className}`}
         type={visible ? "text" : "password"}
         name={name}
         placeholder={placeholder}
         required={required}
         minLength={minLength}
-        defaultValue={defaultValue}
-        autoComplete={name === "password" ? "current-password" : "new-password"}
+        {...(controlled
+          ? { value, onChange }
+          : { defaultValue })}
+        autoComplete={
+          autoComplete ||
+          (name === "password" || name === "current" ? "current-password" : "new-password")
+        }
+        aria-invalid={status === "error"}
       />
       <button
         type="button"

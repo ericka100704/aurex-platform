@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import PasswordInput from "@/components/ui/PasswordInput";
 import GlassCard from "@/components/ui/GlassCard";
+import Spinner from "@/components/ui/Spinner";
 import {
   changePasswordAction,
   resendVerifyEmailAction,
@@ -17,6 +18,8 @@ export default function ProfileForm({ user }) {
   const [pending, setPending] = useState("");
   const [pwOpen, setPwOpen] = useState(false);
   const [preview, setPreview] = useState(user.avatarUrl || "");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const fileRef = useRef(null);
 
   useEffect(() => {
@@ -34,11 +37,23 @@ export default function ProfileForm({ user }) {
 
   async function savePassword(e) {
     e.preventDefault();
+    if (newPassword.length < 6 || newPassword !== confirmPassword) {
+      setPasswordMsg(
+        newPassword !== confirmPassword
+          ? "Passwords do not match."
+          : "Password must be at least 6 characters."
+      );
+      return;
+    }
     setPending("password");
     setPasswordMsg("");
     const result = await changePasswordAction(new FormData(e.currentTarget));
     setPasswordMsg(result.message || (result.ok ? "Saved." : "Failed."));
-    if (result.ok) e.currentTarget.reset();
+    if (result.ok) {
+      e.currentTarget.reset();
+      setNewPassword("");
+      setConfirmPassword("");
+    }
     setPending("");
   }
 
@@ -72,7 +87,14 @@ export default function ProfileForm({ user }) {
               disabled={pending === "verify"}
               onClick={resendVerify}
             >
-              {pending === "verify" ? "Sending..." : "Resend link"}
+              {pending === "verify" ? (
+                <>
+                  <Spinner className="mr-1 inline h-3.5 w-3.5" />
+                  Sending...
+                </>
+              ) : (
+                "Resend link"
+              )}
             </button>
             {verifyMsg ? <p className="mt-1 text-xs text-white/60">{verifyMsg}</p> : null}
           </div>
@@ -140,7 +162,14 @@ export default function ProfileForm({ user }) {
           </div>
           <div className="md:col-span-2">
             <button type="submit" className="btn-rose" disabled={pending === "profile"}>
-              {pending === "profile" ? "Saving..." : "Save profile"}
+              {pending === "profile" ? (
+                <>
+                  <Spinner className="h-4 w-4" />
+                  Saving...
+                </>
+              ) : (
+                "Save profile"
+              )}
             </button>
             {profileMsg ? (
               <span
@@ -148,7 +177,7 @@ export default function ProfileForm({ user }) {
                   profileMsg.toLowerCase().includes("fail") ||
                   profileMsg.toLowerCase().includes("must") ||
                   profileMsg.toLowerCase().includes("required")
-                    ? "text-rose"
+                    ? "text-red-400"
                     : "text-emerald-400"
                 }`}
               >
@@ -174,10 +203,66 @@ export default function ProfileForm({ user }) {
         {pwOpen ? (
           <form onSubmit={savePassword} className="mt-5 space-y-3">
             <PasswordInput name="current" placeholder="Current password" required />
-            <PasswordInput name="password" placeholder="New password (min 6)" minLength={6} required />
-            <PasswordInput name="confirm" placeholder="Confirm new password" minLength={6} required />
-            <button type="submit" className="btn-gold" disabled={pending === "password"}>
-              {pending === "password" ? "Saving..." : "Update password"}
+            <PasswordInput
+              name="password"
+              placeholder="New password (min 6)"
+              minLength={6}
+              required
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              status={
+                !newPassword
+                  ? undefined
+                  : newPassword.length >= 6
+                    ? "ok"
+                    : "error"
+              }
+            />
+            <PasswordInput
+              name="confirm"
+              placeholder="Confirm new password"
+              minLength={6}
+              required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              status={
+                !confirmPassword
+                  ? undefined
+                  : confirmPassword === newPassword && newPassword.length >= 6
+                    ? "ok"
+                    : "error"
+              }
+            />
+            {confirmPassword ? (
+              <p
+                className={`text-xs ${
+                  confirmPassword === newPassword && newPassword.length >= 6
+                    ? "text-emerald-400"
+                    : "text-red-400"
+                }`}
+              >
+                {confirmPassword === newPassword && newPassword.length >= 6
+                  ? "Passwords match."
+                  : "Passwords do not match."}
+              </p>
+            ) : null}
+            <button
+              type="submit"
+              className="btn-gold"
+              disabled={
+                pending === "password" ||
+                newPassword.length < 6 ||
+                newPassword !== confirmPassword
+              }
+            >
+              {pending === "password" ? (
+                <>
+                  <Spinner className="h-4 w-4" />
+                  Saving...
+                </>
+              ) : (
+                "Update password"
+              )}
             </button>
             {passwordMsg ? (
               <span
@@ -185,7 +270,7 @@ export default function ProfileForm({ user }) {
                   passwordMsg.toLowerCase().includes("changed") ||
                   passwordMsg.toLowerCase().includes("updated")
                     ? "text-emerald-400"
-                    : "text-rose"
+                    : "text-red-400"
                 }`}
               >
                 {passwordMsg}

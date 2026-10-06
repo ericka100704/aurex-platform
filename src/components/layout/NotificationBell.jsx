@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Bell } from "lucide-react";
+import Spinner from "@/components/ui/Spinner";
 import {
   getNotificationsAction,
   getUnreadCountAction,
@@ -50,26 +51,31 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState([]);
   const [unread, setUnread] = useState(0);
+  const [loading, setLoading] = useState(false);
   const [panelStyle, setPanelStyle] = useState(null);
   const rootRef = useRef(null);
 
-  function placePanel() {
+  function computePanelStyle() {
     const el = rootRef.current;
-    if (!el || typeof window === "undefined") return;
+    if (!el || typeof window === "undefined") return null;
     const rect = el.getBoundingClientRect();
     const gap = 8;
     const margin = 12;
     const top = rect.bottom + gap;
     if (window.innerWidth < 768) {
-      setPanelStyle({ top, left: margin, right: margin, width: "auto" });
-      return;
+      return { top, left: margin, right: margin, width: "auto" };
     }
-    setPanelStyle({
+    return {
       top,
       right: Math.max(margin, window.innerWidth - rect.right),
       left: "auto",
       width: 352,
-    });
+    };
+  }
+
+  function placePanel() {
+    const next = computePanelStyle();
+    if (next) setPanelStyle(next);
   }
 
   async function load() {
@@ -128,10 +134,17 @@ export default function NotificationBell() {
     };
   }, [open]);
 
-  async function openPanel() {
+  function openPanel() {
     const next = !open;
-    setOpen(next);
-    if (next) await load();
+    if (!next) {
+      setOpen(false);
+      return;
+    }
+    // Position + open immediately — don't wait for the server
+    setPanelStyle(computePanelStyle());
+    setOpen(true);
+    setLoading(true);
+    void load().finally(() => setLoading(false));
   }
 
   async function readOne(id) {
@@ -176,7 +189,7 @@ export default function NotificationBell() {
         >
           <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
             <p className="text-sm font-medium text-white">Notifications</p>
-            {unread > 0 ? (
+            {unread > 0 && !loading ? (
               <button
                 type="button"
                 className="text-[11px] text-gold hover:underline"
@@ -187,7 +200,12 @@ export default function NotificationBell() {
             ) : null}
           </div>
           <div className="max-h-[22rem] overflow-y-auto">
-            {items.length ? (
+            {loading && !items.length ? (
+              <div className="flex flex-col items-center justify-center gap-2 px-4 py-10">
+                <Spinner className="h-6 w-6 text-gold" />
+                <p className="text-xs text-white/40">Loading...</p>
+              </div>
+            ) : items.length ? (
               items.map((item) => {
                 const unreadItem = !item.readAt;
                 const href = notificationHref(item);

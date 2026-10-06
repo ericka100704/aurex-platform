@@ -115,13 +115,13 @@ export default function HomeLanding({ plans = [], rewards }) {
           <div className="flex items-center gap-2">
             <Link
               href="/login"
-              className="rounded-full border-2 border-rose px-4 py-2 text-sm font-medium text-gold shadow-[0_0_14px_rgba(255,77,166,0.28)] transition hover:bg-rose/10"
+              className="rounded-full border-2 border-rose px-4 py-2 text-sm font-medium text-gold shadow-[0_0_14px_rgba(168,85,247,0.28)] transition hover:bg-rose/10"
             >
               Sign in
             </Link>
             <Link
               href="/register"
-              className="rounded-full bg-gold-gradient px-4 py-2 text-sm font-semibold text-dark shadow-gold"
+              className="rounded-full bg-gold-gradient px-4 py-2 text-sm font-semibold text-white shadow-gold"
             >
               Start Now
             </Link>
@@ -145,7 +145,7 @@ export default function HomeLanding({ plans = [], rewards }) {
           <div className="mt-8 flex w-full max-w-md flex-col items-stretch justify-center gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center">
             <Link
               href="/register"
-              className="rounded-full bg-gold-gradient px-7 py-3 text-center text-sm font-semibold text-dark shadow-[0_8px_28px_rgba(212,175,55,0.45)] md:text-base"
+              className="rounded-full bg-gold-gradient px-7 py-3 text-center text-sm font-semibold text-white shadow-[0_8px_28px_rgba(124,58,237,0.45)] md:text-base"
             >
               Join SOLANA Today
             </Link>
@@ -180,7 +180,7 @@ export default function HomeLanding({ plans = [], rewards }) {
                   key={plan.id}
                   className="rounded-2xl border border-gold/30 bg-black/45 p-5"
                   style={{
-                    boxShadow: "inset 0 0 0 1px rgba(255,77,166,0.12)",
+                    boxShadow: "inset 0 0 0 1px rgba(168,85,247,0.12)",
                   }}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -304,7 +304,7 @@ export default function HomeLanding({ plans = [], rewards }) {
           <div className="mt-8 text-center">
             <Link
               href="/register"
-              className="rounded-full bg-gold-gradient px-8 py-3 text-sm font-semibold text-dark shadow-gold"
+              className="rounded-full bg-gold-gradient px-8 py-3 text-sm font-semibold text-white shadow-gold"
             >
               Start Earning with SOLANA
             </Link>

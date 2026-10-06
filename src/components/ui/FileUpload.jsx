@@ -84,7 +84,7 @@ export default function FileUpload({
         onDrop={handleDrop}
         className={`flex cursor-pointer items-center gap-3 rounded-2xl border bg-black/40 px-3.5 py-3 transition ${
           dragging
-            ? "border-magenta/50 shadow-[0_0_0_1px_rgba(255,105,180,0.25)]"
+            ? "border-magenta/50 shadow-[0_0_0_1px_rgba(168,85,247,0.25)]"
             : "border-white/10 hover:border-magenta/40"
         }`}
       >

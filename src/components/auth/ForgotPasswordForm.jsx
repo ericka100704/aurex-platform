@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Logo from "@/components/ui/Logo";
+import Spinner from "@/components/ui/Spinner";
 import { LegalFooter } from "@/components/legal/LegalLayout";
 import { forgotPasswordAction } from "@/actions/auth";
 
@@ -37,10 +38,17 @@ export default function ForgotPasswordForm() {
           required
         />
         <button type="submit" className="btn-gold w-full" disabled={pending}>
-          {pending ? "Sending..." : "Send reset link"}
+          {pending ? (
+            <>
+              <Spinner className="h-4 w-4" />
+              Sending...
+            </>
+          ) : (
+            "Send reset link"
+          )}
         </button>
         {message ? (
-          <p className={`text-center text-xs ${ok ? "text-emerald-400" : "text-rose"}`}>
+          <p className={`text-center text-xs ${ok ? "text-emerald-400" : "text-red-400"}`}>
             {message}
           </p>
         ) : null}

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import GlassCard from "@/components/ui/GlassCard";
+import Spinner from "@/components/ui/Spinner";
 import { formatCurrency, formatClockTime } from "@/lib/utils";
 import { requestWithdrawalAction } from "@/actions/withdrawals";
 
@@ -97,7 +98,7 @@ export default function WithdrawForm({
             aria-invalid={amountInvalid}
             className={`input-luxury ${
               amountInvalid
-                ? "!border-rose-400/70 !ring-2 !ring-rose-400/35 focus:!border-rose-400"
+                ? "!border-red-400/70 !ring-2 !ring-red-400/35 focus:!border-red-400"
                 : ""
             }`}
           />
@@ -150,7 +151,14 @@ export default function WithdrawForm({
           className="btn-gold w-full"
           disabled={pending || amountInvalid}
         >
-          {pending ? "Submitting..." : "Request Withdrawal"}
+          {pending ? (
+            <>
+              <Spinner className="h-4 w-4" />
+              Submitting...
+            </>
+          ) : (
+            "Request Withdrawal"
+          )}
         </button>
         {message && !amountHint ? (
           <p className="text-center text-xs text-gold">{message}</p>

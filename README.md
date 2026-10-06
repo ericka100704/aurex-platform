@@ -8,8 +8,9 @@ Luxury Online Investment Platform scaffold built with **Next.js (App Router, Jav
 
 | Token | Value |
 |-------|-------|
-| Gold | `#D4AF37` |
-| Rose Pink | `#FF69B4` |
+| Electric Violet | `#8A2BE2` |
+| Deep Violet | `#5A189A` |
+| Neon Magenta | `#BF00FF` |
 | Dark | `#0D0D0D` |
 
 ## Quick Start

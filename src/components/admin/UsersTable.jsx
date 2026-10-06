@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import GlassCard from "@/components/ui/GlassCard";
+import Spinner from "@/components/ui/Spinner";
 import { formatCurrency } from "@/lib/utils";
 import { updateUserAction } from "@/actions/admin";
 
@@ -12,13 +13,13 @@ const STATUS_STYLES = {
   SUSPENDED:
     "border-amber-400/40 bg-amber-400/15 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.12)]",
   BANNED:
-    "border-rose-400/40 bg-rose-400/15 text-rose-300 shadow-[0_0_12px_rgba(251,113,133,0.12)]",
+    "border-red-400/40 bg-red-400/15 text-red-300 shadow-[0_0_12px_rgba(248,113,113,0.12)]",
 };
 
 const STATUS_DOT = {
   ACTIVE: "bg-emerald-400",
   SUSPENDED: "bg-amber-400",
-  BANNED: "bg-rose-400",
+  BANNED: "bg-red-400",
 };
 
 const FILTERS = ["ALL", "ACTIVE", "SUSPENDED", "BANNED"];
@@ -175,7 +176,14 @@ export default function UsersTable({ initialUsers = [] }) {
                       onClick={() => saveStatus(user)}
                       className="btn-gold !px-3 !py-1.5 text-xs"
                     >
-                      {busyId === user.id ? "Saving..." : "Save status"}
+                      {busyId === user.id ? (
+                        <>
+                          <Spinner className="h-3.5 w-3.5" />
+                          Saving...
+                        </>
+                      ) : (
+                        "Save status"
+                      )}
                     </button>
                   </td>
                 </tr>

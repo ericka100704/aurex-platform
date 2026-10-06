@@ -88,7 +88,7 @@ export function statusColor(status) {
     PENDING: "text-amber-300 bg-amber-300/10 border-amber-300/30",
     APPROVED: "text-emerald-400 bg-emerald-400/10 border-emerald-400/30",
     COMPLETED: "text-sky-300 bg-sky-300/10 border-sky-300/30",
-    REJECTED: "text-rose-400 bg-rose-400/10 border-rose-400/30",
+    REJECTED: "text-red-400 bg-red-400/10 border-red-400/30",
     CANCELLED: "text-white/50 bg-white/5 border-white/10",
     SUSPENDED: "text-orange-300 bg-orange-300/10 border-orange-300/30",
     BANNED: "text-red-400 bg-red-400/10 border-red-400/30",
