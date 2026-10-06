@@ -1,11 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronDown, Trash2 } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import GlassCard from "@/components/ui/GlassCard";
-import Spinner from "@/components/ui/Spinner";
 import { formatCurrency } from "@/lib/utils";
-import { deleteUserAction, updateUserAction } from "@/actions/admin";
+import { updateUserAction } from "@/actions/admin";
 
 const STATUS_STYLES = {
   ACTIVE:
@@ -75,31 +74,14 @@ export default function UsersTable({ initialUsers = [] }) {
     setBusyId(null);
   }
 
-  async function removeUser(user) {
-    const ok = window.confirm(
-      `Remove account "${user.fullName}" (${user.email})?\nThis cannot be undone.`
-    );
-    if (!ok) return;
-    setMessage("");
-    setBusyId(user.id);
-    const result = await deleteUserAction(user.id);
-    if (result.ok) {
-      setUsers((prev) => prev.filter((u) => u.id !== user.id));
-      setMessage(result.message || "Account removed.");
-    } else {
-      setMessage(result.message || "Failed to remove account.");
-    }
-    setBusyId(null);
-  }
-
   return (
     <GlassCard hover={false} className="overflow-hidden p-0">
       <div className="flex flex-col gap-3 border-b border-white/5 px-5 py-4 md:flex-row md:items-end md:justify-between">
         <div>
           <h3 className="font-display text-lg text-white">User Management</h3>
           <p className="text-xs text-white/45">
-            Status saves automatically. Use Remove to permanently delete a user
-            account.
+            Status saves automatically. Suspend or ban accounts when needed —
+            balances and history are never deleted.
           </p>
           {message ? <p className="mt-1 text-xs text-gold">{message}</p> : null}
         </div>
@@ -137,13 +119,12 @@ export default function UsersTable({ initialUsers = [] }) {
               <th className="px-4 py-3">Balance</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Role</th>
-              <th className="px-4 py-3">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-white/40">
+                <td colSpan={5} className="px-4 py-8 text-center text-white/40">
                   No users found
                 </td>
               </tr>
@@ -195,25 +176,6 @@ export default function UsersTable({ initialUsers = [] }) {
                   </td>
                   <td className="px-4 py-3 text-xs uppercase tracking-wide text-gold">
                     {user.role}
-                  </td>
-                  <td className="px-4 py-3">
-                    {user.role === "ADMIN" ? (
-                      <span className="text-[11px] text-white/35">Protected</span>
-                    ) : (
-                      <button
-                        type="button"
-                        disabled={busyId === user.id}
-                        onClick={() => removeUser(user)}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-red-400/35 bg-red-400/10 px-3 py-1.5 text-xs font-medium text-red-300 transition hover:bg-red-400/20 disabled:opacity-60"
-                      >
-                        {busyId === user.id ? (
-                          <Spinner className="h-3.5 w-3.5" />
-                        ) : (
-                          <Trash2 className="h-3.5 w-3.5" />
-                        )}
-                        Remove
-                      </button>
-                    )}
                   </td>
                 </tr>
               ))
