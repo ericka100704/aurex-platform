@@ -84,8 +84,8 @@ export default function HomeLanding({ plans = [], rewards }) {
   const maxLevel = rewards?.maxLevel ?? 4;
 
   return (
-    <div className="relative min-h-dvh overflow-x-hidden bg-[#0d0d0d]">
-      <div className="pointer-events-none absolute inset-0">
+    <div className="relative min-h-dvh bg-[#0d0d0d]">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <Image
           src="/solana-bg.png"
           alt=""
@@ -98,8 +98,8 @@ export default function HomeLanding({ plans = [], rewards }) {
         <div className="absolute inset-0 bg-[#0d0d0d]/55" />
       </div>
 
-      <div className="relative z-10 mx-auto flex max-w-6xl flex-col px-5 pb-16 pt-5 md:px-8">
-        <header className="sticky top-4 z-20 flex items-center justify-between gap-4 rounded-full border border-white/10 bg-[#121212]/95 px-4 py-3 md:px-6">
+      <header className="fixed inset-x-0 top-0 z-50 px-5 pt-4 md:px-8">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 rounded-full border border-white/10 bg-[#121212]/92 px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-md md:px-6">
           <Logo size="sm" />
           <nav className="hidden items-center gap-6 lg:flex">
             {NAV.map((item) => (
@@ -126,9 +126,11 @@ export default function HomeLanding({ plans = [], rewards }) {
               Start Now
             </Link>
           </div>
-        </header>
+        </div>
+      </header>
 
-        <section className="flex flex-col items-center px-2 pb-10 pt-16 text-center md:pt-20">
+      <div className="relative z-10 mx-auto flex max-w-6xl flex-col overflow-x-hidden px-5 pb-16 pt-24 md:px-8 md:pt-28">
+        <section className="flex flex-col items-center px-2 pb-10 pt-8 text-center md:pt-12">
           <div className="mb-6 inline-flex items-center rounded-full border border-gold/30 bg-black/40 px-4 py-1.5 text-xs text-gold/90">
             Trade · Grow · Succeed
           </div>

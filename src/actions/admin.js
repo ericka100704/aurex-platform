@@ -40,6 +40,50 @@ export async function updateUserAction({ id, status }) {
   return { ok: true, data: serialize(user), message: "Status updated." };
 }
 
+export async function deleteUserAction(id) {
+  const admin = await requireAdmin();
+  const userId = String(id || "").trim();
+  if (!userId) return { ok: false, message: "Invalid user." };
+  if (userId === admin.id) {
+    return { ok: false, message: "You cannot delete your own account." };
+  }
+
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, role: true, email: true, fullName: true },
+  });
+  if (!target) return { ok: false, message: "User not found." };
+  if (target.role === "ADMIN") {
+    return { ok: false, message: "Admin accounts cannot be deleted here." };
+  }
+
+  try {
+    await prisma.notification.deleteMany({ where: { userId } });
+    await prisma.walletLedger.deleteMany({ where: { userId } });
+    await prisma.investment.deleteMany({ where: { userId } });
+    await prisma.deposit.deleteMany({ where: { userId } });
+    await prisma.withdrawal.deleteMany({ where: { userId } });
+    await prisma.referral.deleteMany({
+      where: { OR: [{ referrerId: userId }, { referredId: userId }] },
+    });
+    await prisma.user.updateMany({
+      where: { referredById: userId },
+      data: { referredById: null },
+    });
+    await prisma.user.delete({ where: { id: userId } });
+  } catch {
+    return { ok: false, message: "Could not delete this account." };
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/users");
+  return {
+    ok: true,
+    message: `Removed ${target.fullName || target.email}.`,
+  };
+}
+
+
 export async function createDepositMethodAction(data) {
   await requireAdmin();
 

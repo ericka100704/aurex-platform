@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Trash2 } from "lucide-react";
 import GlassCard from "@/components/ui/GlassCard";
 import Spinner from "@/components/ui/Spinner";
 import { formatCurrency } from "@/lib/utils";
-import { updateUserAction } from "@/actions/admin";
+import { deleteUserAction, updateUserAction } from "@/actions/admin";
 
 const STATUS_STYLES = {
   ACTIVE:
@@ -50,19 +50,44 @@ export default function UsersTable({ initialUsers = [] }) {
     setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, ...patch } : u)));
   }
 
-  async function saveStatus(user) {
+  async function changeStatus(user, nextStatus) {
+    if (nextStatus === user.status) return;
+    const previous = user.status;
+    patchLocal(user.id, { status: nextStatus });
     setMessage("");
     setBusyId(user.id);
     const result = await updateUserAction({
       id: user.id,
-      status: user.status,
+      status: nextStatus,
     });
-    setMessage(result.message || (result.ok ? "Status updated." : "Failed"));
-    if (result.ok && result.data) {
-      patchLocal(user.id, {
-        balance: result.data.balance,
-        status: result.data.status,
-      });
+    if (!result.ok) {
+      patchLocal(user.id, { status: previous });
+      setMessage(result.message || "Failed to update status.");
+    } else {
+      setMessage(result.message || "Status updated.");
+      if (result.data) {
+        patchLocal(user.id, {
+          balance: result.data.balance,
+          status: result.data.status,
+        });
+      }
+    }
+    setBusyId(null);
+  }
+
+  async function removeUser(user) {
+    const ok = window.confirm(
+      `Remove account "${user.fullName}" (${user.email})?\nThis cannot be undone.`
+    );
+    if (!ok) return;
+    setMessage("");
+    setBusyId(user.id);
+    const result = await deleteUserAction(user.id);
+    if (result.ok) {
+      setUsers((prev) => prev.filter((u) => u.id !== user.id));
+      setMessage(result.message || "Account removed.");
+    } else {
+      setMessage(result.message || "Failed to remove account.");
     }
     setBusyId(null);
   }
@@ -73,7 +98,8 @@ export default function UsersTable({ initialUsers = [] }) {
         <div>
           <h3 className="font-display text-lg text-white">User Management</h3>
           <p className="text-xs text-white/45">
-            Balance is read-only (deposits, invest, withdraw only). Admin can update status.
+            Status saves automatically. Use Remove to permanently delete a user
+            account.
           </p>
           {message ? <p className="mt-1 text-xs text-gold">{message}</p> : null}
         </div>
@@ -111,7 +137,7 @@ export default function UsersTable({ initialUsers = [] }) {
               <th className="px-4 py-3">Balance</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Role</th>
-              <th className="px-4 py-3">Save</th>
+              <th className="px-4 py-3">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -149,9 +175,10 @@ export default function UsersTable({ initialUsers = [] }) {
                         className={`pointer-events-none absolute left-2.5 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full ${STATUS_DOT[user.status] || "bg-white/40"}`}
                       />
                       <select
-                        className={`w-full appearance-none rounded-full border py-2 pl-7 pr-8 text-[11px] font-semibold uppercase tracking-wider outline-none transition focus:ring-1 focus:ring-gold/40 ${STATUS_STYLES[user.status] || STATUS_STYLES.ACTIVE}`}
+                        className={`w-full appearance-none rounded-full border py-2 pl-7 pr-8 text-[11px] font-semibold uppercase tracking-wider outline-none transition focus:ring-1 focus:ring-gold/40 disabled:opacity-60 ${STATUS_STYLES[user.status] || STATUS_STYLES.ACTIVE}`}
                         value={user.status}
-                        onChange={(e) => patchLocal(user.id, { status: e.target.value })}
+                        disabled={busyId === user.id || user.role === "ADMIN"}
+                        onChange={(e) => changeStatus(user, e.target.value)}
                       >
                         <option value="ACTIVE" className="bg-dark text-emerald-300">
                           Active
@@ -170,21 +197,23 @@ export default function UsersTable({ initialUsers = [] }) {
                     {user.role}
                   </td>
                   <td className="px-4 py-3">
-                    <button
-                      type="button"
-                      disabled={busyId === user.id}
-                      onClick={() => saveStatus(user)}
-                      className="btn-gold !px-3 !py-1.5 text-xs"
-                    >
-                      {busyId === user.id ? (
-                        <>
+                    {user.role === "ADMIN" ? (
+                      <span className="text-[11px] text-white/35">Protected</span>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={busyId === user.id}
+                        onClick={() => removeUser(user)}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-red-400/35 bg-red-400/10 px-3 py-1.5 text-xs font-medium text-red-300 transition hover:bg-red-400/20 disabled:opacity-60"
+                      >
+                        {busyId === user.id ? (
                           <Spinner className="h-3.5 w-3.5" />
-                          Saving...
-                        </>
-                      ) : (
-                        "Save status"
-                      )}
-                    </button>
+                        ) : (
+                          <Trash2 className="h-3.5 w-3.5" />
+                        )}
+                        Remove
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))
