@@ -13,6 +13,8 @@ export default function ApprovalQueue({
   items: initialItems = [],
   type = "deposit",
   showStatus = true,
+  /** When false, show status badges only (history lists — no second Approve). */
+  allowActions = true,
   emptyLabel = "Queue empty",
   collapsible = false,
   defaultOpen = true,
@@ -27,6 +29,7 @@ export default function ApprovalQueue({
   }, [initialItems]);
 
   async function review(id, status) {
+    if (busyId) return;
     setBusyId(id);
     try {
       const res = await fetch("/api/admin/approvals", {
@@ -37,12 +40,18 @@ export default function ApprovalQueue({
       });
       const result = await res.json().catch(() => null);
       if (!result?.ok) {
-        alert(result?.message || "Action failed");
+        const msg = result?.message || "Action failed";
+        // Already processed (e.g. approved from another tab / stale UI)
+        if (/not pending/i.test(msg)) {
+          setItems((prev) => prev.filter((item) => item.id !== id));
+          router.refresh();
+          return;
+        }
+        alert(msg);
         return;
       }
-      setItems((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, status } : item))
-      );
+      // Leave pending queue after approve/reject
+      setItems((prev) => prev.filter((item) => item.id !== id));
       router.refresh();
     } catch (error) {
       alert(error.message || "Action failed");
@@ -105,7 +114,6 @@ export default function ApprovalQueue({
                     {item.accountDetails ? ` · ${item.accountDetails}` : ""}
                     {" · "}
                     {item.createdAt}
-                    {item.provider === "paymongo" ? " · PayMongo" : ""}
                     {item.hasProof || item.proofImageUrl ? (
                       <>
                         {" · "}
@@ -129,7 +137,7 @@ export default function ApprovalQueue({
                 {showStatus ? (
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusBadge status={item.status} />
-                    {item.status === "PENDING" && item.provider !== "paymongo" ? (
+                    {allowActions && item.status === "PENDING" ? (
                       <>
                         <button
                           type="button"

@@ -15,14 +15,16 @@ export default async function AdminDepositsPage() {
         subtitle="Approve only after you verify the GCash/GoTyme screenshot."
         items={pending}
         type="deposit"
-        showStatus={true}
+        showStatus
+        allowActions
       />
       <ApprovalQueue
         title="Deposit Records"
-        subtitle="PayMongo auto-credits when paid. Manual receipts need Approve."
+        subtitle="Recent deposits and their status after admin review."
         items={items}
         type="deposit"
-        showStatus={true}
+        showStatus
+        allowActions={false}
       />
     </div>
   );
