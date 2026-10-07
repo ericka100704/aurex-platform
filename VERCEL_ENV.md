@@ -13,7 +13,7 @@ Use **Production** (and Preview if you test preview URLs).
 
 Copy from local `.env` unless noted.
 
-- [ ] `NEXT_PUBLIC_APP_URL` = your live URL (e.g. `https://www.aurex.click` until DNS changes)
+- [ ] `NEXT_PUBLIC_APP_URL` = your live URL (e.g. `https://www.solana.autos`)
 - [ ] `NEXT_PUBLIC_APP_NAME` = `SOLANA`
 - [ ] `DATABASE_URL` — Supabase pooler (`:6543`, `?pgbouncer=true`)
 - [ ] `DIRECT_URL` — Supabase direct (`:5432`)

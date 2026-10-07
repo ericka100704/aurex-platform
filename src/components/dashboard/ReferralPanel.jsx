@@ -16,7 +16,7 @@ export default function ReferralPanel({
   const link =
     typeof window !== "undefined"
       ? `${window.location.origin}/register?ref=${referralCode}`
-      : `https://www.aurex.click/register?ref=${referralCode}`;
+      : `https://www.solana.autos/register?ref=${referralCode}`;
 
   async function copyLink() {
     try {
