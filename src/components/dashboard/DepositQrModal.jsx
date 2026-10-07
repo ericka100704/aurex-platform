@@ -21,10 +21,7 @@ function openGcashApp() {
 }
 
 function depositQrSrc(method) {
-  if (method?.qrImageUrl) return method.qrImageUrl;
-  if (method?.type === "GCASH") return "/qr/gcash.png";
-  if (method?.type === "GOTYME") return "/qr/gotyme.png";
-  return null;
+  return method?.qrImageUrl || null;
 }
 
 export default function DepositQrModal({

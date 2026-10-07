@@ -248,9 +248,23 @@ export default function DepositForm({ methods = [], onlinePayments = false }) {
               {selected.walletAddress ? (
                 <p className="break-all text-xs text-gold/90">{selected.walletAddress}</p>
               ) : null}
+              {selected.qrImageUrl ? (
+                <div className="mt-3 overflow-hidden rounded-xl border border-white/10 bg-white p-2.5">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={selected.qrImageUrl}
+                    alt={`${selected.name || "Payment"} QR code`}
+                    className="mx-auto h-auto w-full max-w-[220px] object-contain"
+                  />
+                  <p className="mt-1.5 text-center text-[11px] text-black/45">
+                    Scan QR · send exact amount
+                  </p>
+                </div>
+              ) : null}
               {!selected.accountName &&
               !selected.accountNumber &&
-              !selected.walletAddress ? (
+              !selected.walletAddress &&
+              !selected.qrImageUrl ? (
                 <p className="mt-1 text-xs text-white/45">
                   Account details will appear after you submit.
                 </p>
