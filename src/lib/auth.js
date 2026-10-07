@@ -54,6 +54,21 @@ export async function getSession() {
   return verifySessionToken(token);
 }
 
+/**
+ * Fast shell auth from the JWT only (no DB). Use in dashboard/admin layouts
+ * so nav between pages does not wait on a user row round-trip.
+ */
+export const getShellUser = cache(async () => {
+  const session = await getSession();
+  if (!session?.sub) return null;
+  return {
+    id: String(session.sub),
+    email: session.email ? String(session.email) : "",
+    fullName: session.name ? String(session.name) : "Member",
+    role: session.role === "ADMIN" ? "ADMIN" : "USER",
+  };
+});
+
 export const getCurrentUser = cache(async () => {
   const session = await getSession();
   if (!session?.sub) return null;

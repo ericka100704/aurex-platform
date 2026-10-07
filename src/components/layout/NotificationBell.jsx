@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Bell } from "lucide-react";
 import Spinner from "@/components/ui/Spinner";
@@ -10,6 +10,9 @@ import {
   markAllNotificationsReadAction,
   markNotificationReadAction,
 } from "@/actions/notifications";
+
+const CACHE_KEY = "solana_notif_cache_v1";
+const PREFETCH_MS = 45_000;
 
 const HREF_BY_TYPE = {
   investment: "/dashboard/plans",
@@ -47,13 +50,38 @@ function timeAgo(value) {
   });
 }
 
+function readCache() {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.items)) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(items, unread) {
+  try {
+    sessionStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify({ items, unread, at: Date.now() })
+    );
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState([]);
   const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const [panelStyle, setPanelStyle] = useState(null);
   const rootRef = useRef(null);
+  const loadGen = useRef(0);
 
   function computePanelStyle() {
     const el = rootRef.current;
@@ -78,17 +106,48 @@ export default function NotificationBell() {
     if (next) setPanelStyle(next);
   }
 
-  async function load() {
-    const result = await getNotificationsAction();
+  const applyResult = useCallback((result) => {
     if (!result?.ok && !result?.items) return;
-    setItems(result.items || []);
-    setUnread(result.unread || 0);
-  }
+    const nextItems = result.items || [];
+    const nextUnread = result.unread ?? 0;
+    setItems(nextItems);
+    setUnread(nextUnread);
+    writeCache(nextItems, nextUnread);
+  }, []);
 
-  async function loadUnread() {
+  const load = useCallback(
+    async ({ silent = false } = {}) => {
+      const gen = ++loadGen.current;
+      if (!silent) setLoading(true);
+      try {
+        const result = await getNotificationsAction();
+        if (gen !== loadGen.current) return;
+        applyResult(result);
+      } finally {
+        if (gen === loadGen.current) setLoading(false);
+      }
+    },
+    [applyResult]
+  );
+
+  const loadUnread = useCallback(async () => {
     const result = await getUnreadCountAction();
-    if (result?.ok) setUnread(result.unread || 0);
-  }
+    if (result?.ok) {
+      setUnread(result.unread || 0);
+      const cached = readCache();
+      if (cached) writeCache(cached.items, result.unread || 0);
+    }
+  }, []);
+
+  useEffect(() => {
+    const cached = readCache();
+    if (cached) {
+      setItems(cached.items);
+      setUnread(cached.unread || 0);
+    }
+    setHydrated(true);
+    void load({ silent: true });
+  }, [load]);
 
   useEffect(() => {
     function tick() {
@@ -97,14 +156,13 @@ export default function NotificationBell() {
       }
       void loadUnread();
     }
-    tick();
-    const interval = setInterval(tick, 120_000);
+    const interval = setInterval(tick, PREFETCH_MS);
     document.addEventListener("visibilitychange", tick);
     return () => {
       clearInterval(interval);
       document.removeEventListener("visibilitychange", tick);
     };
-  }, []);
+  }, [loadUnread]);
 
   useEffect(() => {
     function onClick(e) {
@@ -140,30 +198,38 @@ export default function NotificationBell() {
       setOpen(false);
       return;
     }
-    // Position + open immediately — don't wait for the server
     setPanelStyle(computePanelStyle());
     setOpen(true);
-    setLoading(true);
-    void load().finally(() => setLoading(false));
+    // Show cache instantly; refresh in background
+    void load({ silent: items.length > 0 });
   }
 
   async function readOne(id) {
-    await markNotificationReadAction(id);
-    setItems((prev) =>
-      prev.map((item) =>
+    setItems((prev) => {
+      const next = prev.map((item) =>
         item.id === id ? { ...item, readAt: item.readAt || new Date().toISOString() } : item
-      )
-    );
+      );
+      writeCache(next, Math.max(0, unread - 1));
+      return next;
+    });
     setUnread((n) => Math.max(0, n - 1));
+    void markNotificationReadAction(id);
   }
 
   async function readAll() {
-    await markAllNotificationsReadAction();
-    setItems((prev) =>
-      prev.map((item) => ({ ...item, readAt: item.readAt || new Date().toISOString() }))
-    );
+    setItems((prev) => {
+      const next = prev.map((item) => ({
+        ...item,
+        readAt: item.readAt || new Date().toISOString(),
+      }));
+      writeCache(next, 0);
+      return next;
+    });
     setUnread(0);
+    void markAllNotificationsReadAction();
   }
+
+  const showSpinner = loading && !items.length && hydrated;
 
   return (
     <div ref={rootRef} className="relative">
@@ -189,18 +255,23 @@ export default function NotificationBell() {
         >
           <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
             <p className="text-sm font-medium text-white">Notifications</p>
-            {unread > 0 && !loading ? (
-              <button
-                type="button"
-                className="text-[11px] text-gold hover:underline"
-                onClick={readAll}
-              >
-                Mark all read
-              </button>
-            ) : null}
+            <div className="flex items-center gap-2">
+              {loading && items.length ? (
+                <Spinner className="h-3.5 w-3.5 text-gold/70" />
+              ) : null}
+              {unread > 0 && !showSpinner ? (
+                <button
+                  type="button"
+                  className="text-[11px] text-gold hover:underline"
+                  onClick={readAll}
+                >
+                  Mark all read
+                </button>
+              ) : null}
+            </div>
           </div>
           <div className="max-h-[22rem] overflow-y-auto">
-            {loading && !items.length ? (
+            {showSpinner ? (
               <div className="flex flex-col items-center justify-center gap-2 px-4 py-10">
                 <Spinner className="h-6 w-6 text-gold" />
                 <p className="text-xs text-white/40">Loading...</p>
@@ -213,6 +284,7 @@ export default function NotificationBell() {
                   <Link
                     key={item.id}
                     href={href}
+                    prefetch
                     className={`block border-b border-white/[0.06] px-4 py-3 text-left transition hover:bg-white/[0.04] ${
                       unreadItem ? "bg-magenta/[0.06]" : ""
                     }`}
@@ -225,7 +297,9 @@ export default function NotificationBell() {
                       {item.title}
                     </p>
                     {item.body ? (
-                      <p className="mt-0.5 break-words text-[12px] leading-snug text-white/45">{item.body}</p>
+                      <p className="mt-0.5 break-words text-[12px] leading-snug text-white/45">
+                        {item.body}
+                      </p>
                     ) : null}
                     <p className="mt-1 text-[10px] uppercase tracking-wide text-white/30">
                       {timeAgo(item.createdAt)}

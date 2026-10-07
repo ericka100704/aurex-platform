@@ -6,7 +6,8 @@ import { ensureRoiCatchUpAction } from "@/actions/roi";
 
 /** How often to re-check while the dashboard stays open (cron backup). */
 const RETRY_MS = 5 * 60 * 1000;
-const FIRST_DELAY_MS = 600;
+/** Wait for first paint + nav to settle before hitting the DB. */
+const FIRST_DELAY_MS = 2500;
 
 /**
  * Runs daily ROI + maturity catch-up after paint.

@@ -2,8 +2,9 @@
 const nextConfig = {
   experimental: {
     staleTimes: {
-      dynamic: 30,
-      static: 180,
+      // Keep soft-navigated dashboard/admin pages warm longer so jumps feel instant.
+      dynamic: 120,
+      static: 300,
     },
     serverActions: {
       bodySizeLimit: "10mb",
