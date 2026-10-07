@@ -14,6 +14,7 @@ export function formatPercent(value) {
 export function formatDate(date) {
   if (!date) return "—";
   return new Intl.DateTimeFormat("en-PH", {
+    timeZone: "Asia/Manila",
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -23,6 +24,7 @@ export function formatDate(date) {
 export function formatDateTime(date) {
   if (!date) return "—";
   return new Intl.DateTimeFormat("en-PH", {
+    timeZone: "Asia/Manila",
     year: "numeric",
     month: "short",
     day: "numeric",

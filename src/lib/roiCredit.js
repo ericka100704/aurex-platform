@@ -82,10 +82,9 @@ async function creditOneInvestment(investment, now) {
   const planName = investment.plan?.name || "your plan";
 
   // Keep the transaction lean: wallet + investment only. Notifications after commit.
+  // Do NOT use SELECT FOR UPDATE — Supabase PgBouncer rejects it in pooler mode,
+  // which silently blocked daily ROI on production.
   const applied = await prisma.$transaction(async (tx) => {
-    await tx.$queryRaw`
-      SELECT id FROM investments WHERE id = ${investment.id} FOR UPDATE
-    `;
     const fresh = await tx.investment.findUnique({
       where: { id: investment.id },
     });
@@ -108,15 +107,21 @@ async function creditOneInvestment(investment, now) {
 
     const earnedAfter = money(toNumber(fresh.earnedAmount) + next.profitToCredit);
 
+    // Optimistic guard: only update while still ACTIVE with the same lastRoiAt.
     if (next.profitToCredit > 0 || next.shouldComplete) {
-      await tx.investment.update({
-        where: { id: fresh.id },
+      const updated = await tx.investment.updateMany({
+        where: {
+          id: fresh.id,
+          status: "ACTIVE",
+          lastRoiAt: fresh.lastRoiAt,
+        },
         data: {
           earnedAmount: { increment: next.profitToCredit },
           lastRoiAt: now,
           status: next.shouldComplete ? "COMPLETED" : "ACTIVE",
         },
       });
+      if (updated.count !== 1) return null;
     }
 
     let roiWalletDelta = 0;
