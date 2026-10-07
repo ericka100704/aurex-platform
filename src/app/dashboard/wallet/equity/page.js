@@ -60,7 +60,7 @@ export default async function EquityHistoryPage() {
       <div>
         <h2 className="font-display text-2xl text-white">Earnings</h2>
         <p className="text-sm text-white/40">
-          Amounts and dates you earned — daily ROI, referrals, and returned principal
+          Wallet credits — plan ROI and principal unlock at maturity; referrals credit when earned
         </p>
       </div>
       <MoneyHistory

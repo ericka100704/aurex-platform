@@ -78,7 +78,7 @@ export function buildRoiSeries(investments = [], range = "1W") {
     return {
       points: labelEvery(points, 8),
       total: daily,
-      caption: "Today's credited ROI",
+      caption: "Today's accrued ROI",
     };
   }
 
@@ -94,7 +94,7 @@ export function buildRoiSeries(investments = [], range = "1W") {
     return {
       points: labelEvery(points, 7),
       total: points.reduce((s, p) => s + p.earned, 0),
-      caption: "Last 7 days credited",
+      caption: "Last 7 days accrued",
     };
   }
 
@@ -110,7 +110,7 @@ export function buildRoiSeries(investments = [], range = "1W") {
     return {
       points: labelEvery(points, 6),
       total: points.reduce((s, p) => s + p.earned, 0),
-      caption: "Last 30 days credited",
+      caption: "Last 30 days accrued",
     };
   }
 
@@ -127,7 +127,7 @@ export function buildRoiSeries(investments = [], range = "1W") {
     return {
       points: labelEvery(points, 6),
       total: points.reduce((s, p) => s + p.earned, 0),
-      caption: "Last 6 months credited",
+      caption: "Last 6 months accrued",
     };
   }
 
@@ -144,6 +144,6 @@ export function buildRoiSeries(investments = [], range = "1W") {
   return {
     points: labelEvery(points, 12),
     total: points.reduce((s, p) => s + p.earned, 0),
-    caption: "Last 12 months credited",
+    caption: "Last 12 months accrued",
   };
 }

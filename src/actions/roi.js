@@ -30,9 +30,14 @@ export async function ensureRoiCatchUpAction() {
     const completed = Number(summary.completed || 0);
     const principalReturned = Number(summary.principalReturned || 0);
     const profitCredited = Number(summary.profitCredited || 0);
+    const walletTouched = Number(summary.walletTouched || 0);
     const balanceChanged =
       Boolean(summary.ran) &&
-      (credited > 0 || completed > 0 || principalReturned > 0 || profitCredited > 0);
+      (credited > 0 ||
+        completed > 0 ||
+        principalReturned > 0 ||
+        profitCredited > 0 ||
+        walletTouched > 0);
 
     return {
       ok: true,
@@ -42,6 +47,7 @@ export async function ensureRoiCatchUpAction() {
       completed,
       principalReturned,
       profitCredited,
+      walletTouched,
       balanceChanged,
       errors: Array.isArray(summary.errors) ? summary.errors.length : 0,
     };

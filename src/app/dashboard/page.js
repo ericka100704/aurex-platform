@@ -31,7 +31,7 @@ export default async function UserDashboardPage() {
           href="/dashboard/wallet/available"
           label="Available Balance"
           value={formatCurrency(available)}
-          subtext="Ready to invest or withdraw"
+          subtext="Unlocked cash — invest or withdraw"
           icon="wallet"
           accent="gold"
         />
@@ -47,7 +47,7 @@ export default async function UserDashboardPage() {
           href="/dashboard/wallet/equity"
           label="Total ROI Earned"
           value={formatCurrency(totalEarned)}
-          subtext="Lifetime earnings"
+          subtext="Accrued on plans · unlocks at maturity"
           icon="trendingUp"
           accent="gold"
         />
