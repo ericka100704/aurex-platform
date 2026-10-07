@@ -10,6 +10,32 @@ import {
   submitDepositAction,
 } from "@/actions/deposits";
 
+const TYPE_LABELS = {
+  GCASH: "GCash",
+  GOTYME: "GoTyme",
+  MAYA: "Maya",
+  BANK_TRANSFER: "Bank Transfer",
+  CRYPTO: "Crypto",
+  CUSTOM: "Other",
+};
+
+function methodTypeLabel(method) {
+  if (!method) return "Payment method";
+  if (method.type === "CUSTOM") return method.name || "Other";
+  return TYPE_LABELS[method.type] || method.name || "Payment method";
+}
+
+function methodOptionLabel(method, allMethods) {
+  const base = methodTypeLabel(method);
+  const sameTypeCount = allMethods.filter(
+    (m) => methodTypeLabel(m) === base
+  ).length;
+  if (sameTypeCount > 1 && method.name && method.name !== base) {
+    return `${base} — ${method.name}`;
+  }
+  return base;
+}
+
 export default function DepositForm({ methods = [], onlinePayments = false }) {
   const [methodId, setMethodId] = useState(methods[0]?.id || "");
   const [amount, setAmount] = useState("");
@@ -204,10 +230,36 @@ export default function DepositForm({ methods = [], onlinePayments = false }) {
           >
             {methods.map((m) => (
               <option key={m.id} value={m.id}>
-                {m.name} — {m.accountNumber}
+                {methodOptionLabel(m, methods)}
               </option>
             ))}
           </select>
+          {selected ? (
+            <div className="mt-2 rounded-2xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm">
+              <p className="text-[11px] uppercase tracking-wide text-white/40">
+                Send payment to
+              </p>
+              {selected.accountName ? (
+                <p className="mt-1 font-medium text-white">{selected.accountName}</p>
+              ) : null}
+              {selected.accountNumber ? (
+                <p className="text-gold">{selected.accountNumber}</p>
+              ) : null}
+              {selected.walletAddress ? (
+                <p className="break-all text-xs text-gold/90">{selected.walletAddress}</p>
+              ) : null}
+              {!selected.accountName &&
+              !selected.accountNumber &&
+              !selected.walletAddress ? (
+                <p className="mt-1 text-xs text-white/45">
+                  Account details will appear after you submit.
+                </p>
+              ) : null}
+              {selected.instructions ? (
+                <p className="mt-1 text-[11px] text-white/45">{selected.instructions}</p>
+              ) : null}
+            </div>
+          ) : null}
         </div>
         <div>
           <label className="mb-1 block text-xs text-white/50">Amount (₱)</label>

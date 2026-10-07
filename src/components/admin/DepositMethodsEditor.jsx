@@ -101,7 +101,7 @@ export default function DepositMethodsEditor({ initialMethods = [] }) {
         <form onSubmit={handleSubmit} className="mt-4 space-y-3">
           <input
             className="input-luxury"
-            placeholder="Display name"
+            placeholder="Display name (e.g. GCash)"
             required
             value={form.name}
             onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
@@ -109,7 +109,25 @@ export default function DepositMethodsEditor({ initialMethods = [] }) {
           <select
             className="input-luxury"
             value={form.type}
-            onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))}
+            onChange={(e) => {
+              const type = e.target.value;
+              const labels = {
+                GCASH: "GCash",
+                GOTYME: "GoTyme",
+                MAYA: "Maya",
+                BANK_TRANSFER: "Bank Transfer",
+                CRYPTO: "Crypto",
+              };
+              setForm((p) => ({
+                ...p,
+                type,
+                // Keep dropdown label in sync with type when still empty/generic
+                name:
+                  !p.name || Object.values(labels).includes(p.name)
+                    ? labels[type] || p.name
+                    : p.name,
+              }));
+            }}
           >
             <option value="GCASH">GCash</option>
             <option value="GOTYME">GoTyme</option>
@@ -120,7 +138,7 @@ export default function DepositMethodsEditor({ initialMethods = [] }) {
           </select>
           <input
             className="input-luxury"
-            placeholder="Account name"
+            placeholder="Account holder name (shown after user selects method)"
             value={form.accountName}
             onChange={(e) => setForm((p) => ({ ...p, accountName: e.target.value }))}
           />
