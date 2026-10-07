@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import {
   clearSessionCookie,
   createSessionToken,
+  getSession,
   requireUser,
   setSessionCookie,
 } from "@/lib/auth";
@@ -20,6 +21,12 @@ import { sendResetEmail, sendVerifyEmail } from "@/lib/mail";
 import { verifyEmailByToken } from "@/lib/emailAuth";
 import { uploadAvatar } from "@/lib/storage";
 import { createNotification } from "@/lib/notifications";
+import {
+  BCRYPT_ROUNDS,
+  findOldPasswordMatch,
+  formatOldPasswordMessage,
+  setUserPassword,
+} from "@/lib/password";
 
 async function issueSession(user) {
   const token = await createSessionToken({
@@ -87,7 +94,7 @@ export async function registerAction(formData) {
     referralCode = generateReferralCode(fullName);
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
   const user = await prisma.user.create({
     data: {
@@ -137,6 +144,13 @@ export async function loginAction(formData) {
 
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) {
+    const changedAt = await findOldPasswordMatch(user.id, password);
+    if (changedAt) {
+      return {
+        ok: false,
+        message: formatOldPasswordMessage(user.passwordChangedAt || changedAt),
+      };
+    }
     return { ok: false, message: "Invalid email or password." };
   }
 
@@ -212,14 +226,7 @@ export async function resetPasswordAction(formData) {
     return { ok: false, message: "Reset link is invalid or expired." };
   }
 
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      passwordHash: await bcrypt.hash(password, 10),
-      passwordResetToken: null,
-      passwordResetExpires: null,
-    },
-  });
+  await setUserPassword(user.id, password);
 
   await createNotification({
     userId: user.id,
@@ -297,7 +304,9 @@ export async function updateProfileAction(formData) {
 }
 
 export async function changePasswordAction(formData) {
-  const user = await requireUser();
+  const session = await getSession();
+  if (!session?.sub) return { ok: false, message: "Unauthorized." };
+
   const current = String(formData.get("current") || "");
   const password = String(formData.get("password") || "");
   const confirm = String(formData.get("confirm") || "");
@@ -308,21 +317,31 @@ export async function changePasswordAction(formData) {
   if (password !== confirm) {
     return { ok: false, message: "Passwords do not match." };
   }
+  if (current === password) {
+    return { ok: false, message: "New password must be different from current." };
+  }
 
-  const row = await prisma.user.findUnique({ where: { id: user.id } });
+  const row = await prisma.user.findUnique({
+    where: { id: String(session.sub) },
+    select: { id: true, passwordHash: true, role: true, status: true },
+  });
+  if (!row || row.status === "BANNED") {
+    return { ok: false, message: "Unauthorized." };
+  }
+  if (row.status === "SUSPENDED") {
+    return { ok: false, message: "Account suspended." };
+  }
+
   const valid = await bcrypt.compare(current, row.passwordHash);
   if (!valid) return { ok: false, message: "Current password is incorrect." };
 
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { passwordHash: await bcrypt.hash(password, 10) },
-  });
+  await setUserPassword(row.id, password, { currentHash: row.passwordHash });
   await createNotification({
-    userId: user.id,
+    userId: row.id,
     type: "account",
     title: "Password changed",
     body: "Your password was updated. If this wasn’t you, reset it immediately.",
-    href: user.role === "ADMIN" ? "/admin/profile" : "/dashboard/profile",
+    href: row.role === "ADMIN" ? "/admin/profile" : "/dashboard/profile",
   });
   return { ok: true, message: "Password changed." };
 }

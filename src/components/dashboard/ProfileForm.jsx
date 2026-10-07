@@ -28,15 +28,20 @@ export default function ProfileForm({ user }) {
 
   async function saveProfile(e) {
     e.preventDefault();
+    const form = e.currentTarget;
     setPending("profile");
     setProfileMsg("");
-    const result = await updateProfileAction(new FormData(e.currentTarget));
-    setProfileMsg(result.message || (result.ok ? "Saved." : "Failed."));
-    setPending("");
+    try {
+      const result = await updateProfileAction(new FormData(form));
+      setProfileMsg(result.message || (result.ok ? "Saved." : "Failed."));
+    } finally {
+      setPending("");
+    }
   }
 
   async function savePassword(e) {
     e.preventDefault();
+    const form = e.currentTarget;
     if (newPassword.length < 6 || newPassword !== confirmPassword) {
       setPasswordMsg(
         newPassword !== confirmPassword
@@ -47,14 +52,17 @@ export default function ProfileForm({ user }) {
     }
     setPending("password");
     setPasswordMsg("");
-    const result = await changePasswordAction(new FormData(e.currentTarget));
-    setPasswordMsg(result.message || (result.ok ? "Saved." : "Failed."));
-    if (result.ok) {
-      e.currentTarget.reset();
-      setNewPassword("");
-      setConfirmPassword("");
+    try {
+      const result = await changePasswordAction(new FormData(form));
+      setPasswordMsg(result.message || (result.ok ? "Saved." : "Failed."));
+      if (result.ok) {
+        form.reset();
+        setNewPassword("");
+        setConfirmPassword("");
+      }
+    } finally {
+      setPending("");
     }
-    setPending("");
   }
 
   async function resendVerify() {
