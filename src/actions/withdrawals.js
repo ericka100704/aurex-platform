@@ -4,15 +4,18 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, requireUser } from "@/lib/auth";
 import { assertWithdrawalWindowOpen } from "@/lib/business";
-import { getSettingsMap, settingNumber } from "@/lib/settings";
+import { getSettingsMap } from "@/lib/settings";
 import { serialize, toNumber } from "@/lib/serialize";
 import { createNotification, formatCurrency, notifyAdmins } from "@/lib/notifications";
 import { adjustWallet } from "@/lib/ledger";
 import { formatPayoutDestination, formatClockTime } from "@/lib/utils";
 import { revalidateAdminListTags } from "@/lib/adminCache";
 
-function normalizePayoutAccount(raw) {
-  return String(raw || "").replace(/\D/g, "").trim();
+function normalizePayoutAccount(raw, methodType) {
+  const value = String(raw || "").trim();
+  const key = String(methodType || "").toLowerCase();
+  if (key.includes("crypto")) return value;
+  return value.replace(/\D/g, "");
 }
 
 export async function requestWithdrawalAction(formData) {
@@ -21,7 +24,8 @@ export async function requestWithdrawalAction(formData) {
   const methodType = String(formData.get("methodType") || "").trim();
   const accountName = String(formData.get("accountName") || "").trim();
   const accountNumber = normalizePayoutAccount(
-    formData.get("accountNumber") || formData.get("accountDetails")
+    formData.get("accountNumber") || formData.get("accountDetails"),
+    methodType
   );
 
   if (!Number.isFinite(amount) || amount <= 0) {
@@ -46,10 +50,6 @@ export async function requestWithdrawalAction(formData) {
   }
 
   const settings = await getSettingsMap();
-  const minWithdrawal = settingNumber(settings, "min_withdrawal", 500);
-  if (amount < minWithdrawal) {
-    return { ok: false, message: `Minimum withdrawal is ₱${minWithdrawal.toLocaleString()}.` };
-  }
 
   try {
     const withdrawal = await prisma.$transaction(async (tx) => {

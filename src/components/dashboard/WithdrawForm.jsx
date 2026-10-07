@@ -6,39 +6,44 @@ import Spinner from "@/components/ui/Spinner";
 import { formatCurrency, formatClockTime } from "@/lib/utils";
 import { requestWithdrawalAction } from "@/actions/withdrawals";
 
+const PAYOUT_TYPES = [
+  { value: "GCash", label: "GCash" },
+  { value: "GoTyme", label: "GoTyme" },
+  { value: "Maya", label: "Maya" },
+  { value: "Bank Transfer", label: "Bank Transfer" },
+  { value: "Crypto", label: "Crypto" },
+];
+
 export default function WithdrawForm({
   balance = 0,
-  minWithdrawal = 500,
   windowStart = "06:00",
   windowEnd = "16:00",
   releaseTime = "21:00",
-  methods = ["GCash", "GoTyme"],
   defaultName = "",
   defaultPhone = "",
 }) {
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
-  const [method, setMethod] = useState(methods[0] || "GCash");
+  const [method, setMethod] = useState(PAYOUT_TYPES[0].value);
   const [amount, setAmount] = useState("");
 
   const numberLabel = useMemo(() => {
     const key = String(method || "").toLowerCase();
     if (key.includes("gcash")) return "GCash number";
-    if (key.includes("maya") || key.includes("paymaya")) return "Maya number";
+    if (key.includes("maya")) return "Maya number";
     if (key.includes("gotyme")) return "GoTyme number";
-    return "Wallet / mobile number";
+    if (key.includes("bank")) return "Account number";
+    if (key.includes("crypto")) return "Wallet address";
+    return "Account / mobile number";
   }, [method]);
 
   const pesos = Number(amount);
   const hasAmount = amount !== "" && Number.isFinite(pesos);
-  const belowMin = hasAmount && pesos > 0 && pesos < Number(minWithdrawal);
   const overBalance = hasAmount && pesos > Number(balance);
-  const amountInvalid = belowMin || overBalance;
-  const amountHint = belowMin
-    ? `Minimum withdrawal is ${formatCurrency(minWithdrawal)}.`
-    : overBalance
-      ? `Amount exceeds available balance (${formatCurrency(balance)}).`
-      : null;
+  const amountInvalid = overBalance;
+  const amountHint = overBalance
+    ? `Amount exceeds available balance (${formatCurrency(balance)}).`
+    : null;
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -47,7 +52,7 @@ export default function WithdrawForm({
         amountHint ||
           (hasAmount && pesos <= 0
             ? "Enter a valid amount."
-            : `Minimum withdrawal is ${formatCurrency(minWithdrawal)}.`)
+            : "Enter a valid amount.")
       );
       return;
     }
@@ -62,6 +67,7 @@ export default function WithdrawForm({
       if (result.ok) {
         form.reset();
         setAmount("");
+        setMethod(PAYOUT_TYPES[0].value);
       }
     } catch {
       setMessage("Something went wrong. Please try again.");
@@ -74,7 +80,7 @@ export default function WithdrawForm({
     <GlassCard hover={false}>
       <h3 className="font-display text-lg text-white">Withdraw</h3>
       <p className="text-xs text-white/45">
-        Available: {formatCurrency(balance)} · Min {formatCurrency(minWithdrawal)}
+        Available: {formatCurrency(balance)}
       </p>
       <p className="mt-1 text-[11px] text-gold/80">
         Requests: {formatClockTime(windowStart)}–{formatClockTime(windowEnd)}{" "}
@@ -107,16 +113,18 @@ export default function WithdrawForm({
           ) : null}
         </div>
         <div>
-          <label className="mb-1 block text-xs text-white/50">Send to</label>
+          <label className="mb-1 block text-xs text-white/50">
+            Bank / e-wallet type
+          </label>
           <select
             className="input-luxury"
             name="methodType"
             value={method}
             onChange={(e) => setMethod(e.target.value)}
           >
-            {methods.map((m) => (
-              <option key={m} value={m}>
-                {m}
+            {PAYOUT_TYPES.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
               </option>
             ))}
           </select>
@@ -136,14 +144,21 @@ export default function WithdrawForm({
           <input
             className="input-luxury"
             name="accountNumber"
-            type="tel"
-            inputMode="numeric"
+            type={method.toLowerCase().includes("crypto") ? "text" : "tel"}
+            inputMode={method.toLowerCase().includes("crypto") ? "text" : "numeric"}
             defaultValue={defaultPhone}
-            placeholder="Account or mobile number"
+            placeholder={
+              method.toLowerCase().includes("crypto")
+                ? "Wallet address"
+                : method.toLowerCase().includes("bank")
+                  ? "Bank account number"
+                  : "Account or mobile number"
+            }
             required
           />
           <p className="mt-1 text-[11px] text-white/40">
-            Payout is sent to this number. Enter the {method} account or mobile number as shown in the app.
+            Payout is sent to this {method.toLowerCase().includes("crypto") ? "wallet" : "account"}.
+            Enter your {method} details as shown in the app.
           </p>
         </div>
         <button
