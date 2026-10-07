@@ -411,7 +411,7 @@ export async function generateGcashAmountQrAction(amount, methodId) {
 
   const payload = [
     method?.name || "SOLANA",
-    method?.accountName || "MABEL HULAR",
+    method?.accountName || "",
     method?.accountNumber || "",
     `PHP ${pesos.toFixed(2)}`,
   ]
