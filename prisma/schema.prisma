@@ -68,6 +68,7 @@ model User {
   emailVerifyExpires DateTime?
   passwordResetToken String? @unique
   passwordResetExpires DateTime?
+  passwordChangedAt DateTime?
 
   investments   Investment[]
   deposits      Deposit[]
@@ -76,11 +77,25 @@ model User {
   referralsGot  Referral[]   @relation("Referred")
   notifications Notification[]
   ledgerEntries WalletLedger[]
+  passwordHistory PasswordHistory[]
 
   @@index([email])
   @@index([referralCode])
   @@index([referredById])
   @@map("users")
+}
+
+// Hashed previous passwords — used to detect login with an old password.
+model PasswordHistory {
+  id           String   @id @default(cuid())
+  userId       String
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("password_history")
 }
 
 model Plan {

@@ -4,11 +4,29 @@ const bcrypt = require("bcryptjs");
 const prisma = new PrismaClient();
 
 async function main() {
-  const adminPassword = await bcrypt.hash("admin123", 10);
+  const plainAdminPassword = "admin123";
+  const adminPassword = await bcrypt.hash(plainAdminPassword, 10);
+  const existingAdmin = await prisma.user.findUnique({
+    where: { email: "admin@solana.app" },
+  });
+
+  if (
+    existingAdmin?.passwordHash &&
+    !(await bcrypt.compare(plainAdminPassword, existingAdmin.passwordHash))
+  ) {
+    await prisma.passwordHistory.create({
+      data: {
+        userId: existingAdmin.id,
+        passwordHash: existingAdmin.passwordHash,
+      },
+    });
+  }
 
   const admin = await prisma.user.upsert({
     where: { email: "admin@solana.app" },
     update: {
+      passwordHash: adminPassword,
+      passwordChangedAt: new Date(),
       fullName: "SOLANA Admin",
       role: "ADMIN",
       status: "ACTIVE",
@@ -21,6 +39,7 @@ async function main() {
       referralCode: "SOLADMIN",
       balance: 0,
       emailVerifiedAt: new Date(),
+      passwordChangedAt: new Date(),
     },
   });
 
