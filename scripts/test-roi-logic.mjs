@@ -126,6 +126,28 @@ const fullyEarned = { ...base, earnedAmount: 80, lastRoiAt: new Date("2026-01-07
 const rPrincipalOnly = planInvestmentRoi(fullyEarned, endDate);
 assert("principal when fully earned", rPrincipalOnly.profitToCredit === 0 && rPrincipalOnly.principal === 500);
 
+// Real user scenario: invest Oct 6 → ROI Oct 7 → second ROI due Oct 8 after midnight
+const startOct6 = new Date("2026-10-06T15:00:00+08:00");
+const endOct15 = new Date("2026-10-15T23:59:59.999+08:00");
+const afterFirstRoi = {
+  startDate: startOct6,
+  endDate: endOct15,
+  dailyReturn: 31.25,
+  totalExpected: 281.25,
+  earnedAmount: 31.25,
+  amount: 1000,
+  lastRoiAt: new Date("2026-10-07T00:05:00+08:00"),
+};
+const oct8morning = planInvestmentRoi(
+  afterFirstRoi,
+  new Date("2026-10-08T00:24:00+08:00")
+);
+assert(
+  "Oct 8 credits second daily ROI",
+  oct8morning.daysDue === 1 && oct8morning.profitToCredit === 31.25
+);
+assert("Oct 8 not yet maturity", !oct8morning.shouldComplete);
+
 if (process.exitCode) {
   console.error("\nROI logic tests failed.");
 } else {

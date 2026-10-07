@@ -1,21 +1,22 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ensureRoiCatchUpAction } from "@/actions/roi";
 
-/** How often to re-check while the dashboard stays open (cron backup). */
-const RETRY_MS = 5 * 60 * 1000;
-/** Wait for first paint + nav to settle before hitting the DB. */
-const FIRST_DELAY_MS = 2500;
+/** Re-check while the dashboard stays open (backup if cron was missed). */
+const RETRY_MS = 60_000;
+/** Run soon after paint so midnight-due ROI lands without waiting. */
+const FIRST_DELAY_MS = 400;
 
 /**
- * Runs daily ROI + maturity catch-up after paint.
- * Retries on an interval and when the tab becomes visible again.
- * Refreshes when ROI or principal was credited (not ROI-only).
+ * Automatic daily ROI + maturity catch-up.
+ * Runs on mount, every route change, on an interval, and when the tab focuses.
+ * Refreshes the UI when wallet / earned amounts change.
  */
 export default function RoiCatchUp() {
   const router = useRouter();
+  const pathname = usePathname();
   const inFlight = useRef(false);
 
   useEffect(() => {
@@ -57,7 +58,7 @@ export default function RoiCatchUp() {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("focus", onVisible);
     };
-  }, [router]);
+  }, [router, pathname]);
 
   return null;
 }

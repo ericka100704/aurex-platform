@@ -252,10 +252,8 @@ export async function runDailyRoiCredit(now = new Date(), { userId } = {}) {
   return summary;
 }
 
-/** In-flight + DB gate so serverless navigations stay fast. */
+/** In-flight dedupe only — never skip a due credit because of a throttle gate. */
 const ensurePromises = new Map();
-const GATE_KEY = "roi_ensure_gate";
-const GATE_TTL_MS = 60_000;
 
 function manilaDayStart(now = new Date()) {
   const key = zonedDateKey(now, TZ);
@@ -268,37 +266,10 @@ function manilaDayEnd(now = new Date()) {
   return new Date(`${key}T23:59:59.999+08:00`);
 }
 
-function gateKeyFor(userId) {
-  return userId ? `roi_ensure_u:${userId}` : GATE_KEY;
-}
-
-async function readEnsureGate(userId) {
-  const row = await prisma.systemSetting.findUnique({
-    where: { key: gateKeyFor(userId) },
-  });
-  const last = Number(row?.value);
-  return Number.isFinite(last) ? last : 0;
-}
-
-async function touchEnsureGate(userId) {
-  const key = gateKeyFor(userId);
-  const value = String(Date.now());
-  await prisma.systemSetting.upsert({
-    where: { key },
-    create: {
-      key,
-      value,
-      label: userId ? "ROI ensure gate (user)" : "ROI ensure gate",
-      group: "system",
-    },
-    update: { value },
-  });
-}
-
 /**
- * Auto catch-up when cron is missed. Prefer passing userId from the logged-in
- * session so only that user's plans are processed (keeps UI snappy).
- * Probe first; only throttle after a successful check/run.
+ * Auto catch-up when cron is missed (or user opens the app after midnight).
+ * Prefer passing userId so only that member's ACTIVE plans are processed.
+ * Always probes; if anything is due, credits immediately.
  */
 export async function ensureDailyRoiCredit(now = new Date(), { userId } = {}) {
   const flightKey = userId || "__all__";
@@ -306,11 +277,6 @@ export async function ensureDailyRoiCredit(now = new Date(), { userId } = {}) {
 
   const work = (async () => {
     try {
-      const last = await readEnsureGate(userId);
-      if (Date.now() - last < GATE_TTL_MS) {
-        return { ok: true, ran: false, reason: "throttled" };
-      }
-
       const dayStart = manilaDayStart(now);
       // Use end-of-Manila-day so maturity-morning still finds plans whose
       // stored endDate timestamp is later today (e.g. invested in the afternoon).
@@ -329,15 +295,10 @@ export async function ensureDailyRoiCredit(now = new Date(), { userId } = {}) {
       });
 
       if (!dueProbe) {
-        await touchEnsureGate(userId);
         return { ok: true, ran: false, reason: "nothing_due" };
       }
 
       const summary = await runDailyRoiCredit(now, { userId });
-      // Only throttle after a clean run so partial failures can retry soon.
-      if (!summary.errors?.length) {
-        await touchEnsureGate(userId);
-      }
       return { ok: true, ran: true, ...summary };
     } finally {
       ensurePromises.delete(flightKey);
