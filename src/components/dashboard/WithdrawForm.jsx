@@ -12,6 +12,7 @@ const PAYOUT_TYPES = [
   { value: "Maya", label: "Maya" },
   { value: "Bank Transfer", label: "Bank Transfer" },
   { value: "Crypto", label: "Crypto" },
+  { value: "Other", label: "Other" },
 ];
 
 export default function WithdrawForm({
@@ -25,17 +26,21 @@ export default function WithdrawForm({
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
   const [method, setMethod] = useState(PAYOUT_TYPES[0].value);
+  const [customMethod, setCustomMethod] = useState("");
   const [amount, setAmount] = useState("");
 
+  const isOther = method === "Other";
+  const payoutLabel = isOther ? customMethod.trim() || "Other" : method;
+
   const numberLabel = useMemo(() => {
-    const key = String(method || "").toLowerCase();
+    const key = String(payoutLabel || "").toLowerCase();
     if (key.includes("gcash")) return "GCash number";
     if (key.includes("maya")) return "Maya number";
     if (key.includes("gotyme")) return "GoTyme number";
     if (key.includes("bank")) return "Account number";
     if (key.includes("crypto")) return "Wallet address";
     return "Account / mobile number";
-  }, [method]);
+  }, [payoutLabel]);
 
   const pesos = Number(amount);
   const hasAmount = amount !== "" && Number.isFinite(pesos);
@@ -48,12 +53,11 @@ export default function WithdrawForm({
   async function handleSubmit(e) {
     e.preventDefault();
     if (amountInvalid || !hasAmount || pesos <= 0) {
-      setMessage(
-        amountHint ||
-          (hasAmount && pesos <= 0
-            ? "Enter a valid amount."
-            : "Enter a valid amount.")
-      );
+      setMessage(amountHint || "Enter a valid amount.");
+      return;
+    }
+    if (isOther && !customMethod.trim()) {
+      setMessage("Enter the bank or e-wallet name.");
       return;
     }
 
@@ -62,12 +66,14 @@ export default function WithdrawForm({
     setMessage("");
     try {
       const formData = new FormData(form);
+      formData.set("methodType", isOther ? customMethod.trim() : method);
       const result = await requestWithdrawalAction(formData);
       setMessage(result.message);
       if (result.ok) {
         form.reset();
         setAmount("");
         setMethod(PAYOUT_TYPES[0].value);
+        setCustomMethod("");
       }
     } catch {
       setMessage("Something went wrong. Please try again.");
@@ -118,9 +124,11 @@ export default function WithdrawForm({
           </label>
           <select
             className="input-luxury"
-            name="methodType"
             value={method}
-            onChange={(e) => setMethod(e.target.value)}
+            onChange={(e) => {
+              setMethod(e.target.value);
+              if (e.target.value !== "Other") setCustomMethod("");
+            }}
           >
             {PAYOUT_TYPES.map((m) => (
               <option key={m.value} value={m.value}>
@@ -128,6 +136,16 @@ export default function WithdrawForm({
               </option>
             ))}
           </select>
+          {isOther ? (
+            <input
+              className="input-luxury mt-2"
+              value={customMethod}
+              onChange={(e) => setCustomMethod(e.target.value)}
+              placeholder="Type bank or e-wallet name"
+              required
+              autoFocus
+            />
+          ) : null}
         </div>
         <div>
           <label className="mb-1 block text-xs text-white/50">Account name</label>
@@ -144,21 +162,24 @@ export default function WithdrawForm({
           <input
             className="input-luxury"
             name="accountNumber"
-            type={method.toLowerCase().includes("crypto") ? "text" : "tel"}
-            inputMode={method.toLowerCase().includes("crypto") ? "text" : "numeric"}
+            type={payoutLabel.toLowerCase().includes("crypto") ? "text" : "tel"}
+            inputMode={
+              payoutLabel.toLowerCase().includes("crypto") ? "text" : "numeric"
+            }
             defaultValue={defaultPhone}
             placeholder={
-              method.toLowerCase().includes("crypto")
+              payoutLabel.toLowerCase().includes("crypto")
                 ? "Wallet address"
-                : method.toLowerCase().includes("bank")
+                : payoutLabel.toLowerCase().includes("bank")
                   ? "Bank account number"
                   : "Account or mobile number"
             }
             required
           />
           <p className="mt-1 text-[11px] text-white/40">
-            Payout is sent to this {method.toLowerCase().includes("crypto") ? "wallet" : "account"}.
-            Enter your {method} details as shown in the app.
+            Payout is sent to this{" "}
+            {payoutLabel.toLowerCase().includes("crypto") ? "wallet" : "account"}.
+            Enter your {payoutLabel} details as shown in the app.
           </p>
         </div>
         <button
