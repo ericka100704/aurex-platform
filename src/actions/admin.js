@@ -7,6 +7,7 @@ import { serialize } from "@/lib/serialize";
 import { createNotification, formatCurrency } from "@/lib/notifications";
 import { revalidateAdminListTags } from "@/lib/adminCache";
 import { runDailyRoiCredit } from "@/lib/roiCredit";
+import { uploadMethodQr } from "@/lib/storage";
 
 export async function updateUserAction({ id, status }) {
   await requireAdmin();
@@ -42,26 +43,74 @@ export async function updateUserAction({ id, status }) {
   return { ok: true, data: serialize(user), message: "Status updated." };
 }
 
+async function resolveMethodQrUrl(formDataOrFields, existingUrl = null) {
+  if (formDataOrFields instanceof FormData) {
+    const file = formDataOrFields.get("qrImage");
+    if (file && typeof file !== "string" && file.size > 0) {
+      return uploadMethodQr(file);
+    }
+    const clear = formDataOrFields.get("clearQr");
+    if (clear === "1") return null;
+    const keep = formDataOrFields.get("qrImageUrl");
+    if (keep != null && String(keep).trim()) return String(keep).trim();
+    return existingUrl;
+  }
+  if (formDataOrFields?.qrImageUrl !== undefined) {
+    return formDataOrFields.qrImageUrl || null;
+  }
+  return existingUrl;
+}
+
+function methodFieldsFrom(input) {
+  if (input instanceof FormData) {
+    return {
+      name: String(input.get("name") || "").trim(),
+      type: String(input.get("type") || "CUSTOM"),
+      accountName: String(input.get("accountName") || "").trim() || null,
+      accountNumber: String(input.get("accountNumber") || "").trim() || null,
+      instructions: String(input.get("instructions") || "").trim() || null,
+      sortOrder: Number(input.get("sortOrder") || 0),
+    };
+  }
+  return {
+    name: String(input.name || "").trim(),
+    type: input.type || "CUSTOM",
+    accountName: input.accountName || null,
+    accountNumber: input.accountNumber || null,
+    instructions: input.instructions || null,
+    sortOrder: Number(input.sortOrder || 0),
+  };
+}
+
 export async function createDepositMethodAction(data) {
   await requireAdmin();
 
-  const method = await prisma.depositMethod.create({
-    data: {
-      name: String(data.name).trim(),
-      type: data.type || "CUSTOM",
-      accountName: data.accountName || null,
-      accountNumber: data.accountNumber || null,
-      qrImageUrl: data.qrImageUrl || null,
-      instructions: data.instructions || null,
-      isActive: true,
-      sortOrder: Number(data.sortOrder || 0),
-    },
-  });
+  try {
+    const fields = methodFieldsFrom(data);
+    if (!fields.name) return { ok: false, message: "Display name is required." };
 
-  revalidateTag("deposit-methods");
-  revalidatePath("/admin/methods");
-  revalidatePath("/dashboard/deposit");
-  return { ok: true, data: serialize(method) };
+    const qrImageUrl = await resolveMethodQrUrl(data, null);
+
+    const method = await prisma.depositMethod.create({
+      data: {
+        name: fields.name,
+        type: fields.type || "CUSTOM",
+        accountName: fields.accountName,
+        accountNumber: fields.accountNumber,
+        qrImageUrl,
+        instructions: fields.instructions,
+        isActive: true,
+        sortOrder: fields.sortOrder,
+      },
+    });
+
+    revalidateTag("deposit-methods");
+    revalidatePath("/admin/methods");
+    revalidatePath("/dashboard/deposit");
+    return { ok: true, data: serialize(method) };
+  } catch (error) {
+    return { ok: false, message: error.message || "Failed to add method." };
+  }
 }
 
 export async function toggleDepositMethodAction(id) {
@@ -80,30 +129,44 @@ export async function toggleDepositMethodAction(id) {
   return { ok: true, data: serialize(method) };
 }
 
-export async function updateDepositMethodAction({ id, ...data }) {
+export async function updateDepositMethodAction(input) {
   await requireAdmin();
-  if (!id) return { ok: false, message: "Method not found." };
 
-  const current = await prisma.depositMethod.findUnique({ where: { id } });
-  if (!current) return { ok: false, message: "Method not found." };
+  try {
+    const id =
+      input instanceof FormData
+        ? String(input.get("id") || "").trim()
+        : String(input?.id || "").trim();
+    if (!id) return { ok: false, message: "Method not found." };
 
-  const method = await prisma.depositMethod.update({
-    where: { id },
-    data: {
-      name: String(data.name || current.name).trim(),
-      type: data.type || current.type,
-      accountName: data.accountName || null,
-      accountNumber: data.accountNumber || null,
-      qrImageUrl:
-        data.qrImageUrl !== undefined ? data.qrImageUrl || null : current.qrImageUrl,
-      instructions: data.instructions ?? current.instructions,
-    },
-  });
+    const current = await prisma.depositMethod.findUnique({ where: { id } });
+    if (!current) return { ok: false, message: "Method not found." };
 
-  revalidateTag("deposit-methods");
-  revalidatePath("/admin/methods");
-  revalidatePath("/dashboard/deposit");
-  return { ok: true, data: serialize(method), message: "Method updated." };
+    const fields = methodFieldsFrom(input);
+    const qrImageUrl = await resolveMethodQrUrl(input, current.qrImageUrl);
+
+    const method = await prisma.depositMethod.update({
+      where: { id },
+      data: {
+        name: fields.name || current.name,
+        type: fields.type || current.type,
+        accountName: fields.accountName,
+        accountNumber: fields.accountNumber,
+        qrImageUrl,
+        instructions:
+          fields.instructions !== undefined
+            ? fields.instructions
+            : current.instructions,
+      },
+    });
+
+    revalidateTag("deposit-methods");
+    revalidatePath("/admin/methods");
+    revalidatePath("/dashboard/deposit");
+    return { ok: true, data: serialize(method), message: "Method updated." };
+  } catch (error) {
+    return { ok: false, message: error.message || "Failed to update method." };
+  }
 }
 
 export async function deleteDepositMethodAction(id) {

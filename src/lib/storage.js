@@ -4,9 +4,11 @@ import path from "path";
 
 export const DEPOSIT_PROOF_BUCKET = "deposit-proofs";
 export const AVATAR_BUCKET = "avatars";
+export const METHOD_QR_BUCKET = "method-qr";
 const SIGNED_URL_TTL_SEC = 60 * 60;
 const MAX_PROOF_BYTES = 5 * 1024 * 1024;
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+const MAX_METHOD_QR_BYTES = 2 * 1024 * 1024;
 const MAX_INLINE_BYTES = 2 * 1024 * 1024;
 const ALLOWED_EXT = new Set(["jpg", "jpeg", "png", "webp", "heic", "heif"]);
 
@@ -113,6 +115,56 @@ export async function uploadAvatar(file, userId) {
   const publicUrl = data?.publicUrl;
   if (!publicUrl) throw new Error("Could not get photo URL.");
   return `${publicUrl}?v=${Date.now()}`;
+}
+
+async function ensureMethodQrBucket(supabase) {
+  const { data: buckets } = await supabase.storage.listBuckets();
+  if (buckets?.some((bucket) => bucket.name === METHOD_QR_BUCKET)) return;
+
+  const { error } = await supabase.storage.createBucket(METHOD_QR_BUCKET, {
+    public: true,
+    fileSizeLimit: MAX_METHOD_QR_BYTES,
+    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+  });
+  if (error && !String(error.message || "").toLowerCase().includes("already")) {
+    throw error;
+  }
+}
+
+/** Public QR / account photo for deposit methods (admin upload). */
+export async function uploadMethodQr(file) {
+  if (!file || typeof file === "string" || file.size === 0) return null;
+  if (file.size > MAX_METHOD_QR_BYTES) {
+    throw new Error("QR photo must be 2MB or smaller.");
+  }
+
+  const ext = safeExt(file.name);
+  const bytes = Buffer.from(await file.arrayBuffer());
+
+  if (isSupabaseStorageConfigured()) {
+    const objectPath = `methods/qr_${Date.now()}_${Math.random()
+      .toString(36)
+      .slice(2)}.${ext}`;
+    const supabase = getSupabaseAdmin();
+    await ensureMethodQrBucket(supabase);
+    const { error } = await supabase.storage
+      .from(METHOD_QR_BUCKET)
+      .upload(objectPath, bytes, {
+        contentType: contentTypeFor(ext),
+        upsert: false,
+      });
+    if (error) throw error;
+    const { data } = supabase.storage.from(METHOD_QR_BUCKET).getPublicUrl(objectPath);
+    const publicUrl = data?.publicUrl;
+    if (!publicUrl) throw new Error("Could not get QR photo URL.");
+    return `${publicUrl}?v=${Date.now()}`;
+  }
+
+  const filename = `method_qr_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+  const dir = path.join(process.cwd(), "public", "uploads");
+  await mkdir(dir, { recursive: true });
+  await writeFile(path.join(dir, filename), bytes);
+  return `/uploads/${filename}`;
 }
 
 export async function uploadDepositProof(file, userId) {

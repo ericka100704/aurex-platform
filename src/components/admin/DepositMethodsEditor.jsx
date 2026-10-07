@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import GlassCard from "@/components/ui/GlassCard";
+import FileUpload from "@/components/ui/FileUpload";
 import {
   createDepositMethodAction,
   deleteDepositMethodAction,
@@ -17,36 +18,64 @@ const EMPTY_FORM = {
   qrImageUrl: "",
 };
 
+const TYPE_LABELS = {
+  GCASH: "GCash",
+  GOTYME: "GoTyme",
+  MAYA: "Maya",
+  BANK_TRANSFER: "Bank Transfer",
+  CRYPTO: "Crypto",
+};
+
 export default function DepositMethodsEditor({ initialMethods = [] }) {
   const [methods, setMethods] = useState(initialMethods);
   const [form, setForm] = useState(EMPTY_FORM);
   const [editingId, setEditingId] = useState(null);
   const [message, setMessage] = useState("");
   const [busyId, setBusyId] = useState(null);
+  const [pending, setPending] = useState(false);
+  const [uploadKey, setUploadKey] = useState(0);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setMessage("");
-    if (editingId) {
-      const result = await updateDepositMethodAction({ id: editingId, ...form });
-      if (result.ok) {
-        setMethods((prev) => prev.map((m) => (m.id === editingId ? result.data : m)));
-        setEditingId(null);
-        setForm(EMPTY_FORM);
-        setMessage("Method updated.");
-      } else {
-        setMessage(result.message || "Failed to update.");
-      }
-      return;
-    }
+    setPending(true);
+    const formEl = e.currentTarget;
+    const formData = new FormData(formEl);
+    formData.set("name", form.name);
+    formData.set("type", form.type);
+    formData.set("accountName", form.accountName);
+    formData.set("accountNumber", form.accountNumber);
+    if (form.qrImageUrl) formData.set("qrImageUrl", form.qrImageUrl);
 
-    const result = await createDepositMethodAction(form);
-    if (result.ok) {
-      setMethods((prev) => [...prev, result.data]);
-      setForm(EMPTY_FORM);
-      setMessage("Method added.");
-    } else {
-      setMessage(result.message || "Failed.");
+    try {
+      if (editingId) {
+        formData.set("id", editingId);
+        const result = await updateDepositMethodAction(formData);
+        if (result.ok) {
+          setMethods((prev) =>
+            prev.map((m) => (m.id === editingId ? result.data : m))
+          );
+          setEditingId(null);
+          setForm(EMPTY_FORM);
+          setUploadKey((k) => k + 1);
+          setMessage("Method updated.");
+        } else {
+          setMessage(result.message || "Failed to update.");
+        }
+        return;
+      }
+
+      const result = await createDepositMethodAction(formData);
+      if (result.ok) {
+        setMethods((prev) => [...prev, result.data]);
+        setForm(EMPTY_FORM);
+        setUploadKey((k) => k + 1);
+        setMessage("Method added.");
+      } else {
+        setMessage(result.message || "Failed.");
+      }
+    } finally {
+      setPending(false);
     }
   }
 
@@ -59,12 +88,14 @@ export default function DepositMethodsEditor({ initialMethods = [] }) {
       accountNumber: method.accountNumber || "",
       qrImageUrl: method.qrImageUrl || "",
     });
+    setUploadKey((k) => k + 1);
     setMessage("");
   }
 
   function cancelEdit() {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setUploadKey((k) => k + 1);
     setMessage("");
   }
 
@@ -78,7 +109,9 @@ export default function DepositMethodsEditor({ initialMethods = [] }) {
   }
 
   async function removeMethod(id) {
-    const confirmed = window.confirm("Delete this payment method? Existing deposits stay, but this account is removed.");
+    const confirmed = window.confirm(
+      "Delete this payment method? Existing deposits stay, but this account is removed."
+    );
     if (!confirmed) return;
     setBusyId(id);
     const result = await deleteDepositMethodAction(id);
@@ -111,20 +144,12 @@ export default function DepositMethodsEditor({ initialMethods = [] }) {
             value={form.type}
             onChange={(e) => {
               const type = e.target.value;
-              const labels = {
-                GCASH: "GCash",
-                GOTYME: "GoTyme",
-                MAYA: "Maya",
-                BANK_TRANSFER: "Bank Transfer",
-                CRYPTO: "Crypto",
-              };
               setForm((p) => ({
                 ...p,
                 type,
-                // Keep dropdown label in sync with type when still empty/generic
                 name:
-                  !p.name || Object.values(labels).includes(p.name)
-                    ? labels[type] || p.name
+                  !p.name || Object.values(TYPE_LABELS).includes(p.name)
+                    ? TYPE_LABELS[type] || p.name
                     : p.name,
               }));
             }}
@@ -150,14 +175,24 @@ export default function DepositMethodsEditor({ initialMethods = [] }) {
               setForm((p) => ({ ...p, accountNumber: e.target.value }))
             }
           />
-          <input
-            className="input-luxury"
-            placeholder="QR image URL (optional) e.g. /qr/gcash.png"
-            value={form.qrImageUrl}
-            onChange={(e) => setForm((p) => ({ ...p, qrImageUrl: e.target.value }))}
+          <FileUpload
+            key={uploadKey}
+            name="qrImage"
+            accept="image/*"
+            required={false}
+            label="QR code photo (optional)"
+            emptyText="Upload QR photo"
+            hint="Tap to choose · PNG or JPG"
+            initialPreview={form.qrImageUrl || ""}
           />
-          <button type="submit" className="btn-gold w-full">
-            {editingId ? "Save Changes" : "Add Method"}
+          <button type="submit" className="btn-gold w-full" disabled={pending}>
+            {pending
+              ? editingId
+                ? "Saving..."
+                : "Adding..."
+              : editingId
+                ? "Save Changes"
+                : "Add Method"}
           </button>
           {editingId ? (
             <button type="button" className="btn-ghost w-full" onClick={cancelEdit}>
@@ -176,14 +211,24 @@ export default function DepositMethodsEditor({ initialMethods = [] }) {
               key={m.id}
               className="list-row-hover flex flex-col gap-3 rounded-xl border border-white/5 bg-white/[0.02] px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
             >
-              <div>
-                <p className="text-sm text-white">
-                  {m.name}{" "}
-                  <span className="text-[11px] text-white/40">({m.type})</span>
-                </p>
-                <p className="text-xs text-gold">
-                  {m.accountName} · {m.accountNumber}
-                </p>
+              <div className="flex min-w-0 items-center gap-3">
+                {m.qrImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={m.qrImageUrl}
+                    alt=""
+                    className="h-12 w-12 shrink-0 rounded-lg border border-white/10 object-cover"
+                  />
+                ) : null}
+                <div className="min-w-0">
+                  <p className="text-sm text-white">
+                    {m.name}{" "}
+                    <span className="text-[11px] text-white/40">({m.type})</span>
+                  </p>
+                  <p className="text-xs text-gold">
+                    {m.accountName} · {m.accountNumber}
+                  </p>
+                </div>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button

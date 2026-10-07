@@ -8,16 +8,23 @@ export default function FileUpload({
   accept = "image/*",
   required = false,
   label = "Receipt / Proof",
+  hint = "Tap to choose · PNG or JPG",
+  emptyText = "Upload receipt photo",
+  initialPreview = "",
 }) {
   const id = useId();
   const inputRef = useRef(null);
   const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState("");
+  const [preview, setPreview] = useState(initialPreview || "");
   const [dragging, setDragging] = useState(false);
 
   useEffect(() => {
+    if (!file) setPreview(initialPreview || "");
+  }, [initialPreview, file]);
+
+  useEffect(() => {
     return () => {
-      if (preview) URL.revokeObjectURL(preview);
+      if (preview && preview.startsWith("blob:")) URL.revokeObjectURL(preview);
     };
   }, [preview]);
 
@@ -101,10 +108,10 @@ export default function FileUpload({
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-medium text-white">
-            {file ? file.name : "Upload receipt photo"}
+            {file ? file.name : preview ? "Photo selected" : emptyText}
           </span>
           <span className="mt-0.5 block text-[11px] text-white/40">
-            {file ? "Tap to replace · PNG or JPG" : "Tap to choose · PNG or JPG"}
+            {file || preview ? "Tap to replace · PNG or JPG" : hint}
           </span>
         </span>
         {file ? (
