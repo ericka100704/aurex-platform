@@ -17,8 +17,8 @@ function money(value) {
 
 /**
  * First ROI is the Manila day after startDate.
- * Accrues once per Manila day through endDate, capped at totalExpected.
- * Wallet (available balance) is funded only at maturity: principal + total earned.
+ * Credits once per Manila day through endDate, capped at totalExpected —
+ * daily ROI goes straight to available balance. Principal returns at maturity.
  */
 export function planInvestmentRoi(investment, now = new Date()) {
   const today = zonedDateKey(now, TZ);
@@ -78,12 +78,10 @@ async function netRoiInWallet(tx, { userId, investmentId }) {
 }
 
 async function creditOneInvestment(investment, now) {
-  const preview = planInvestmentRoi(investment, now);
   const planName = investment.plan?.name || "your plan";
 
   // Keep the transaction lean: wallet + investment only. Notifications after commit.
-  // Do NOT use SELECT FOR UPDATE — Supabase PgBouncer rejects it in pooler mode,
-  // which silently blocked daily ROI on production.
+  // Do NOT use SELECT FOR UPDATE — Supabase PgBouncer rejects it in pooler mode.
   const applied = await prisma.$transaction(async (tx) => {
     const fresh = await tx.investment.findUnique({
       where: { id: investment.id },
@@ -95,19 +93,18 @@ async function creditOneInvestment(investment, now) {
       userId: fresh.userId,
       investmentId: fresh.id,
     });
+    const earnedAfter = money(toNumber(fresh.earnedAmount) + next.profitToCredit);
+    // Top up wallet if earned > ROI already posted (e.g. after reversing a lock).
+    const roiDueToWallet = money(earnedAfter - priorNetRoi);
 
-    // Nothing to accrue, not maturity, and wallet already clean → skip.
     if (
       next.profitToCredit <= 0 &&
       !next.shouldComplete &&
-      priorNetRoi <= 0
+      roiDueToWallet <= 0
     ) {
       return null;
     }
 
-    const earnedAfter = money(toNumber(fresh.earnedAmount) + next.profitToCredit);
-
-    // Optimistic guard: only update while still ACTIVE with the same lastRoiAt.
     if (next.profitToCredit > 0 || next.shouldComplete) {
       const updated = await tx.investment.updateMany({
         where: {
@@ -126,64 +123,44 @@ async function creditOneInvestment(investment, now) {
 
     let roiWalletDelta = 0;
     let principalCredited = 0;
-    let clawedBack = 0;
 
-    if (next.shouldComplete) {
-      // Maturity: unlock principal + all accrued ROI into available balance.
-      const roiDue = money(earnedAfter - priorNetRoi);
-      if (roiDue > 0) {
-        await adjustWallet(tx, {
-          userId: fresh.userId,
-          type: "ROI",
-          amount: roiDue,
-          refType: "investment",
-          refId: fresh.id,
-          note: `${planName} ROI released at maturity`,
-        });
-        roiWalletDelta = roiDue;
-      }
-
-      if (next.principal > 0) {
-        const alreadyReturned = await tx.walletLedger.findFirst({
-          where: {
-            userId: fresh.userId,
-            type: "PRINCIPAL",
-            refType: "investment",
-            refId: fresh.id,
-          },
-          select: { id: true },
-        });
-        if (!alreadyReturned) {
-          await adjustWallet(tx, {
-            userId: fresh.userId,
-            type: "PRINCIPAL",
-            amount: next.principal,
-            refType: "investment",
-            refId: fresh.id,
-            note: `${planName} principal returned`,
-          });
-          principalCredited = next.principal;
-        }
-      }
-    } else if (priorNetRoi > 0) {
-      // Legacy daily wallet ROI — pull back so available stays locked until end.
-      const holder = await tx.user.findUnique({
-        where: { id: fresh.userId },
-        select: { balance: true },
+    if (roiDueToWallet > 0) {
+      await adjustWallet(tx, {
+        userId: fresh.userId,
+        type: "ROI",
+        amount: roiDueToWallet,
+        refType: "investment",
+        refId: fresh.id,
+        note:
+          next.daysDue > 1
+            ? `${planName} ROI (${next.daysDue} days)`
+            : next.profitToCredit > 0
+              ? `${planName} daily ROI`
+              : `${planName} ROI`,
       });
-      const claw = money(
-        Math.min(priorNetRoi, Math.max(0, toNumber(holder?.balance)))
-      );
-      if (claw > 0) {
-        await adjustWallet(tx, {
+      roiWalletDelta = roiDueToWallet;
+    }
+
+    if (next.shouldComplete && next.principal > 0) {
+      const alreadyReturned = await tx.walletLedger.findFirst({
+        where: {
           userId: fresh.userId,
-          type: "ROI",
-          amount: -claw,
+          type: "PRINCIPAL",
           refType: "investment",
           refId: fresh.id,
-          note: `${planName} ROI held until maturity`,
+        },
+        select: { id: true },
+      });
+      if (!alreadyReturned) {
+        await adjustWallet(tx, {
+          userId: fresh.userId,
+          type: "PRINCIPAL",
+          amount: next.principal,
+          refType: "investment",
+          refId: fresh.id,
+          note: `${planName} principal returned`,
         });
-        clawedBack = claw;
+        principalCredited = next.principal;
       }
     }
 
@@ -192,7 +169,6 @@ async function creditOneInvestment(investment, now) {
       earnedAfter,
       roiWalletDelta,
       principalCredited,
-      clawedBack,
       userId: fresh.userId,
       planName,
     };
@@ -208,23 +184,22 @@ async function creditOneInvestment(investment, now) {
     };
   }
 
-  // Best-effort notifications — must not roll back wallet changes.
   try {
-    if (applied.profitToCredit > 0 && !applied.shouldComplete) {
+    if (applied.roiWalletDelta > 0 && !applied.shouldComplete) {
       await createNotification({
         userId: applied.userId,
         type: "roi",
-        title: "Daily ROI accrued",
-        body: `${formatCurrency(applied.profitToCredit)} from ${applied.planName}${
+        title: "Daily ROI credited",
+        body: `${formatCurrency(applied.roiWalletDelta)} from ${applied.planName}${
           applied.daysDue > 1 ? ` (${applied.daysDue} days)` : ""
-        } — locked until the plan ends.`,
-        href: "/dashboard/investments",
+        } is now in your available balance.`,
+        href: "/dashboard/wallet",
       });
     }
     if (applied.shouldComplete) {
       const parts = [];
       if (applied.roiWalletDelta > 0) {
-        parts.push(`${formatCurrency(applied.roiWalletDelta)} ROI unlocked`);
+        parts.push(`${formatCurrency(applied.roiWalletDelta)} ROI credited`);
       }
       if (applied.principalCredited > 0) {
         parts.push(
@@ -237,7 +212,7 @@ async function creditOneInvestment(investment, now) {
         userId: applied.userId,
         type: "investment",
         title: `${applied.planName} completed`,
-        body: `${parts.join(". ") || "Plan completed"}. Now in your available balance.`,
+        body: `${parts.join(". ") || "Plan completed"}.`,
         href: "/dashboard/wallet",
       });
     }
@@ -246,20 +221,17 @@ async function creditOneInvestment(investment, now) {
   }
 
   const walletTouched =
-    applied.roiWalletDelta > 0 ||
-    applied.principalCredited > 0 ||
-    applied.clawedBack > 0;
+    applied.roiWalletDelta > 0 || applied.principalCredited > 0;
 
   return {
     id: investment.id,
     skipped: false,
-    credited: applied.profitToCredit > 0,
+    credited: applied.roiWalletDelta > 0 || applied.profitToCredit > 0,
     completed: applied.shouldComplete,
-    profit: applied.profitToCredit,
+    profit: applied.roiWalletDelta || applied.profitToCredit,
     principal: applied.principalCredited ?? applied.principal,
     daysDue: applied.daysDue,
     walletTouched,
-    clawedBack: applied.clawedBack,
   };
 }
 
@@ -344,7 +316,7 @@ function manilaDayEnd(now = new Date()) {
 /**
  * Auto catch-up when cron is missed (or user opens the app after midnight).
  * Prefer passing userId so only that member's ACTIVE plans are processed.
- * User-scoped runs always process (accrual + clawback + maturity).
+ * User-scoped runs always process (daily ROI + maturity).
  * Global cron probes first for efficiency.
  */
 export async function ensureDailyRoiCredit(now = new Date(), { userId } = {}) {

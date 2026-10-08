@@ -47,7 +47,7 @@ export default async function UserDashboardPage() {
           href="/dashboard/wallet/equity"
           label="Total ROI Earned"
           value={formatCurrency(totalEarned)}
-          subtext="Accrued on plans · unlocks at maturity"
+          subtext="Lifetime earnings"
           icon="trendingUp"
           accent="gold"
         />
