@@ -17,7 +17,6 @@ export default async function WithdrawPage() {
         balance={balance}
         windowStart={settings.withdrawal_window_start}
         windowEnd={settings.withdrawal_window_end}
-        releaseTime={settings.withdrawal_release_time}
         defaultName={user.fullName}
         defaultPhone={user.phone || ""}
       />

@@ -70,7 +70,7 @@ export async function assertWithdrawalWindowOpen() {
 
   if (now < start || now >= end) {
     const err = new Error(
-      `Withdrawals are only accepted from ${formatClockTime(settings.withdrawal_window_start)} to ${formatClockTime(settings.withdrawal_window_end)} (${tz}). Batch release is at ${formatClockTime(settings.withdrawal_release_time)}.`
+      `Withdrawals are only accepted from ${formatClockTime(settings.withdrawal_window_start)} to ${formatClockTime(settings.withdrawal_window_end)} (${tz}).`
     );
     err.code = "WITHDRAWAL_WINDOW_CLOSED";
     throw err;

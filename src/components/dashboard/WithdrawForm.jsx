@@ -19,7 +19,6 @@ export default function WithdrawForm({
   balance = 0,
   windowStart = "06:00",
   windowEnd = "16:00",
-  releaseTime = "21:00",
   defaultName = "",
   defaultPhone = "",
 }) {
@@ -90,7 +89,7 @@ export default function WithdrawForm({
       </p>
       <p className="mt-1 text-[11px] text-gold/80">
         Requests: {formatClockTime(windowStart)}–{formatClockTime(windowEnd)}{" "}
-        (Asia/Manila) · Release batch: {formatClockTime(releaseTime)}
+        (Asia/Manila) · Payout within minutes after admin approval
       </p>
 
       <form onSubmit={handleSubmit} className="mt-4 space-y-3">

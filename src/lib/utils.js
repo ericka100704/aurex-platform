@@ -46,6 +46,40 @@ export function formatClockTime(hhmm) {
   return `${hour}:${minute} ${period}`;
 }
 
+/** Split stored "HH:mm" (24h) into 12-hour parts for admin AM/PM editors. */
+export function splitClockTime(hhmm, fallback = "06:00") {
+  const raw = String(hhmm || fallback || "06:00").trim();
+  const match = raw.match(/^(\d{1,2}):(\d{2})$/);
+  let hour24 = 6;
+  let minute = 0;
+  if (match) {
+    hour24 = Number(match[1]);
+    minute = Number(match[2]);
+  }
+  if (!Number.isFinite(hour24) || hour24 < 0 || hour24 > 23) hour24 = 6;
+  if (!Number.isFinite(minute) || minute < 0 || minute > 59) minute = 0;
+  const period = hour24 >= 12 ? "PM" : "AM";
+  const hour12 = hour24 % 12 || 12;
+  return {
+    hour12,
+    minute,
+    period,
+    display: `${hour12}:${String(minute).padStart(2, "0")}`,
+  };
+}
+
+/** Build stored "HH:mm" from 12-hour hour, minute, and AM/PM. */
+export function joinClockTime(hour12, minute, period) {
+  let h = Number(hour12);
+  let m = Number(minute);
+  if (!Number.isFinite(h) || h < 1 || h > 12) h = 12;
+  if (!Number.isFinite(m) || m < 0 || m > 59) m = 0;
+  const isPm = String(period || "AM").toUpperCase() === "PM";
+  let hour24 = h % 12;
+  if (isPm) hour24 += 12;
+  return `${String(hour24).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
 export function cn(...classes) {
   return classes.filter(Boolean).join(" ");
 }

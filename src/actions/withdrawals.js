@@ -102,7 +102,8 @@ export async function requestWithdrawalAction(formData) {
     return {
       ok: true,
       data: serialize(withdrawal),
-      message: `Withdrawal queued. Batch release processes at ${formatClockTime(settings.withdrawal_release_time)}.`,
+      message:
+        "Withdrawal queued. After admin approval, payout is sent within minutes.",
     };
   } catch (e) {
     return { ok: false, message: e.message || "Withdrawal failed." };
