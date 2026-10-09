@@ -8,11 +8,39 @@ export const dynamic = "force-dynamic";
 
 const TYPES = new Set(["ROI", "REFERRAL", "PRINCIPAL"]);
 
+/** Hide hold/restore bookkeeping rows — only real earnings credits. */
+function isDisplayableEarning(row) {
+  if (!TYPES.has(row.type)) return false;
+  const amount = Number(row.amount);
+  if (!(amount > 0)) return false;
+
+  const note = String(row.note || "");
+  if (/held until maturity/i.test(note)) return false;
+
+  // Sync top-ups used bare "Plan ROI" (no "daily" / "released") — not a real earn day.
+  if (
+    row.type === "ROI" &&
+    /\sROI$/i.test(note) &&
+    !/daily ROI/i.test(note) &&
+    !/released/i.test(note) &&
+    !/\(\d+\s*days?\)/i.test(note)
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
 function groupTitle(row) {
   if (row.type === "REFERRAL") return "Referral";
   if (row.type === "PRINCIPAL") return "Principal returned";
   const note = String(row.note || "");
-  const plan = note.replace(/\s+daily ROI$/i, "").replace(/\s+ROI.*$/i, "").trim();
+  const plan = note
+    .replace(/\s+daily ROI$/i, "")
+    .replace(/\s+ROI\s*\(\d+\s*days?\)$/i, "")
+    .replace(/\s+ROI released at maturity$/i, "")
+    .replace(/\s+ROI$/i, "")
+    .trim();
   return plan || "Daily ROI";
 }
 
@@ -29,7 +57,7 @@ function groupRank(title) {
 export default async function EquityHistoryPage() {
   const user = await requireUser();
   const ledger = await getUserLedger(user.id, 400);
-  const rows = ledger.filter((row) => TYPES.has(row.type) && Number(row.amount) > 0);
+  const rows = ledger.filter(isDisplayableEarning);
 
   const map = new Map();
   for (const row of rows) {
@@ -60,7 +88,7 @@ export default async function EquityHistoryPage() {
       <div>
         <h2 className="font-display text-2xl text-white">Earnings</h2>
         <p className="text-sm text-white/40">
-          Amounts and dates you earned — daily ROI, referrals, and returned principal
+          Daily ROI and other credits that make up your earnings
         </p>
       </div>
       <MoneyHistory
