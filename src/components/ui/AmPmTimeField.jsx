@@ -18,15 +18,15 @@ export default function AmPmTimeField({
   }
 
   return (
-    <div>
+    <div className="min-w-0">
       {label ? (
-        <label className="mb-1 block text-xs text-white/50">{label}</label>
+        <label className="mb-1.5 block text-xs text-white/50">{label}</label>
       ) : null}
-      <div className="flex gap-2">
+      <div className="flex h-[46px] overflow-hidden rounded-2xl border border-white/10 bg-black/40 focus-within:border-magenta/55 focus-within:shadow-[0_0_0_1px_rgba(138,43,226,0.35)]">
         <input
           type="text"
           inputMode="numeric"
-          className="input-luxury min-w-0 flex-1"
+          className="min-w-0 flex-1 bg-transparent px-4 text-base text-white outline-none placeholder:text-white/35"
           placeholder="11:00"
           value={parts.display}
           onChange={(e) => {
@@ -46,7 +46,7 @@ export default function AmPmTimeField({
           aria-label={label ? `${label} time` : "Time"}
         />
         <select
-          className="input-luxury w-[5.5rem] shrink-0"
+          className="w-[4.75rem] shrink-0 cursor-pointer border-l border-white/10 bg-white/[0.04] px-2 text-sm font-medium text-white outline-none"
           value={parts.period}
           onChange={(e) => emit(parts.hour12, parts.minute, e.target.value)}
           aria-label={label ? `${label} AM or PM` : "AM or PM"}
