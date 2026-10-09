@@ -49,8 +49,8 @@ export default function TermsPage() {
       <h2 className="font-display text-xl text-white">5. Withdrawals</h2>
       <p>
         Withdrawal requests are accepted only during the published window
-        (default 6:00 AM–4:00 PM Asia/Manila) and are processed in a later
-        batch after admin approval. Minimum withdrawal amounts apply. Approved
+        (default 6:00 AM–4:00 PM Asia/Manila). After admin approval, payout is
+        sent within minutes. Minimum withdrawal amounts may apply. Approved
         withdrawals are paid to the account details you submit. We are not
         responsible for incorrect account numbers you provide.
       </p>

@@ -42,7 +42,7 @@ const STEPS = [
   {
     step: "04",
     title: "Withdraw your earnings",
-    text: "Request withdrawals between 6:00 AM–4:00 PM (Asia/Manila). Release processing batch runs at 9:00 PM.",
+    text: "Request withdrawals between 6:00 AM–4:00 PM (Asia/Manila). After approval, payout is sent within minutes.",
   },
 ];
 
@@ -65,7 +65,7 @@ const FEATURES = [
   {
     icon: Clock3,
     title: "Clear withdrawal window",
-    text: "Requests accepted 6 AM–4 PM; batch release at 9 PM.",
+    text: "Requests accepted 6 AM–4 PM; payout within minutes after approval.",
   },
   {
     icon: Wallet,

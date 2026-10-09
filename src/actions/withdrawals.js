@@ -8,7 +8,7 @@ import { getSettingsMap } from "@/lib/settings";
 import { serialize, toNumber } from "@/lib/serialize";
 import { createNotification, formatCurrency, notifyAdmins } from "@/lib/notifications";
 import { adjustWallet } from "@/lib/ledger";
-import { formatPayoutDestination, formatClockTime } from "@/lib/utils";
+import { formatPayoutDestination } from "@/lib/utils";
 import { revalidateAdminListTags } from "@/lib/adminCache";
 
 function normalizePayoutAccount(raw, methodType) {
