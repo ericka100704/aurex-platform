@@ -40,11 +40,7 @@ Open [http://localhost:3000](http://localhost:3000)
 | User Dashboard | `/dashboard` |
 | Admin Dashboard | `/admin` |
 
-### Seed accounts
 
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | `admin@solana.app` | `admin123` |
 
 > Auth, dashboards, deposits, investments, withdrawals, and admin CRUD are wired to Prisma/Supabase.
 > Plans: SOLANA START / PRO / ELITE.
